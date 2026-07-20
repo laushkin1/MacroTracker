@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Delete Food</title>
+</head>
+<body style="font-family: Arial; margin: 2rem;">
+    <h2>Delete Food</h2>
+    <p>Are you sure you want to delete "{{ object.name }}"?</p>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" style="color: red;">Yes, delete</button>
+    </form>
+    <a href="{% url 'tracker:food_list' %}">Cancel</a>
+</body>
+</html>

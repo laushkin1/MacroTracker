@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Change Username</title>
+</head>
+<body style="font-family: Arial, sans-serif; margin: 2rem;">
+    <h2>Change Username</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save Username</button>
+    </form>
+    <br>
+    <a href="{% url 'tracker:settings' %}">Cancel</a>
+</body>
+</html>

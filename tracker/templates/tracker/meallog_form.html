@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Meal Log Form</title>
+    <style>
+        .food-item { padding: 8px; cursor: pointer; border-bottom: 1px solid #eee; background: #fff; }
+        .food-item:hover { background: #f0f0f0; }
+        #food_list_container { max-height: 200px; overflow-y: auto; border: 1px solid #ccc; display: none; width: 300px; position: absolute; z-index: 1000; box-shadow: 0px 4px 6px rgba(0,0,0,0.1); }
+        .form-group { margin-bottom: 15px; }
+    </style>
+</head>
+<body style="font-family: Arial; margin: 2rem;">
+    <h2>{% if object %}Edit{% else %}Add{% endif %} Meal</h2>
+    
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label style="display: block; font-weight: bold;">1. Food:</label>
+            <div style="position: relative;">
+                <input type="text" id="food_search" placeholder="Type to search food or barcode..." style="width: 300px; padding: 5px;" autocomplete="off">
+                <a href="{% url 'tracker:food_create' %}" style="margin-left: 10px; font-size: 0.9em;">+ Add new food</a>
+                <div id="food_list_container"></div>
+            </div>
+            <!-- Скрытое поле для передачи ID в Django -->
+            <input type="hidden" name="food" id="id_food" required>
+            <div style="color: red;">{{ form.food.errors }}</div>
+        </div>
+
+        <div class="form-group">
+            <label for="id_weight_grams" style="display: block; font-weight: bold;">2. Portion weight (in grams):</label>
+            {{ form.weight_grams }}
+            <div style="color: red;">{{ form.weight_grams.errors }}</div>
+        </div>
+
+        <div class="form-group">
+            <label for="id_date" style="display: block; font-weight: bold;">3. Date of meal:</label>
+            {{ form.date }}
+            <div style="color: red;">{{ form.date.errors }}</div>
+        </div>
+
+        <button type="submit" style="padding: 6px 12px;">Save Meal</button>
+    </form>
+    <br>
+    <a href="javascript:history.back()">Cancel</a>
+
+    <script>
+        const foods = {{ foods_json|safe }};
+        const searchInput = document.getElementById('food_search');
+        const listContainer = document.getElementById('food_list_container');
+        const hiddenInput = document.getElementById('id_food');
+
+        // Если это режим редактирования, заполняем инпут текущим блюдом
+        {% if object %}
+            hiddenInput.value = "{{ object.food.id }}";
+            searchInput.value = "{{ object.food.name }}";
+        {% endif %}
+
+        function renderList(items) {
+            listContainer.innerHTML = '';
+            if (items.length === 0) {
+                listContainer.style.display = 'none';
+                return;
+            }
+            listContainer.style.display = 'block';
+            
+            const toShow = items.slice(0, 5);
+            toShow.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'food-item';
+                div.textContent = item.name;
+                
+                div.onclick = () => {
+                    hiddenInput.value = item.id;
+                    searchInput.value = item.name;
+                    listContainer.style.display = 'none';
+                };
+                listContainer.appendChild(div);
+            });
+        }
+
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase().trim();
+            if (!query) {
+                renderList(foods);
+                return;
+            }
+
+            // Ищем совпадения с начала слова
+            const startsWith = foods.filter(f => 
+                f.name.toLowerCase().startsWith(query) || 
+                (f.barcode && f.barcode.startsWith(query))
+            );
+
+            // Ищем совпадения внутри слова (но исключаем те, что уже попали в startsWith)
+            const contains = foods.filter(f => 
+                !startsWith.includes(f) && 
+                (f.name.toLowerCase().includes(query) || (f.barcode && f.barcode.includes(query)))
+            );
+
+            // Объединяем результаты
+            renderList([...startsWith, ...contains]);
+        });
+
+        // Показать список при клике на инпут
+        searchInput.addEventListener('focus', () => {
+            searchInput.dispatchEvent(new Event('input'));
+        });
+
+        // Скрыть список при клике вне его
+        document.addEventListener('click', (e) => {
+            if (e.target !== searchInput && e.target !== listContainer) {
+                listContainer.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

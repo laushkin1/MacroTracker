@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Daily Limits</title>
+</head>
+<body style="font-family: Arial, sans-serif; margin: 2rem;">
+    <h2>Edit your Daily Limits</h2>
+    <p>Set to 0 if you don't want to track limits or see color indicators.</p>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save Limits</button>
+    </form>
+    <a href="{% url 'tracker:dashboard' %}">Back to Dashboard</a>
+</body>
+</html>

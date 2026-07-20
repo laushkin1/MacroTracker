@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Food Database</title>
+    <style>
+        .food-item { margin-top: 10px; padding: 10px; background: #f9f9f9; border-radius: 6px; }
+        .controls-container { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 8px; background: #f5f5f5; max-width: 500px; }
+        .search-box { width: 100%; padding: 8px; margin-bottom: 10px; box-sizing: border-box; }
+    </style>
+</head>
+<body style="font-family: Arial; margin: 2rem;">
+    <h2>Food Database</h2>
+    
+    <a href="{% url 'tracker:dashboard' %}{% if origin_date %}?date={{ origin_date }}{% endif %}">&larr; Back to Dashboard</a> | 
+    <a href="{% url 'tracker:food_create' %}{% if origin_date %}?date={{ origin_date }}{% endif %}">+ Add New Food</a>
+    
+    <div class="controls-container">
+        <!-- Search Field -->
+        <input type="text" id="food_search" class="search-box" placeholder="Type to search by name or barcode..." autocomplete="off">
+        
+        <!-- Sorting Form -->
+        <form method="get" id="sort_form">
+            {% if origin_date %}
+                <input type="hidden" name="date" value="{{ origin_date }}">
+            {% endif %}
+            <label for="sort_select"><strong>Sort by:</strong></label>
+            <select name="sort" id="sort_select" onchange="document.getElementById('sort_form').submit()" style="padding: 5px;">
+                <option value="newest" {% if current_sort == 'newest' %}selected{% endif %}>Recently Added (Newest)</option>
+                <option value="oldest" {% if current_sort == 'oldest' %}selected{% endif %}>Oldest First</option>
+                <option value="name_asc" {% if current_sort == 'name_asc' %}selected{% endif %}>Alphabetical (A-Z)</option>
+                <option value="name_desc" {% if current_sort == 'name_desc' %}selected{% endif %}>Alphabetical (Z-A)</option>
+            </select>
+        </form>
+    </div>
+
+    <ul id="food_list_container" style="list-style-type: none; padding: 0; max-width: 500px;">
+        {% for food in foods %}
+            <li class="food-item" data-name="{{ food.name|lower }}" data-barcode="{{ food.barcode|default:''|lower }}">
+                <strong>{{ food.name }}</strong> 
+                <span style="color: #666; font-size: 0.9em;">
+                    (Cal: {{ food.calories|floatformat:1 }} | P: {{ food.protein|floatformat:1 }}g | F: {{ food.fat|floatformat:1 }}g | C: {{ food.carbs|floatformat:1 }}g)
+                </span>
+                <div style="margin-top: 5px; font-size: 0.85em;">
+                    <a href="{% url 'tracker:food_update' food.pk %}{% if origin_date %}?date={{ origin_date }}{% endif %}">Edit</a> | 
+                    <a href="{% url 'tracker:food_delete' food.pk %}{% if origin_date %}?date={{ origin_date }}{% endif %}" style="color: red;">Delete</a>
+                </div>
+            </li>
+        {% empty %}
+            <li>No food in database yet.</li>
+        {% endfor %}
+    </ul>
+
+    <script>
+        const searchInput = document.getElementById('food_search');
+        const items = document.querySelectorAll('.food-item');
+
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase().trim();
+            
+            items.forEach(item => {
+                const name = item.getAttribute('data-name');
+                const barcode = item.getAttribute('data-barcode');
+                
+                // If the name or barcode includes the search query, show it. Otherwise, hide it.
+                if (name.includes(query) || barcode.includes(query)) {
+                    item.style.display = '';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
