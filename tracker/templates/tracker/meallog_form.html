@@ -65,8 +65,7 @@
             }
             listContainer.style.display = 'block';
             
-            const toShow = items.slice(0, 5);
-            toShow.forEach(item => {
+            items.forEach(item => {
                 const div = document.createElement('div');
                 div.className = 'food-item';
                 div.textContent = item.name;

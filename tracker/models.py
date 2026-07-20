@@ -5,10 +5,10 @@ from django.utils import timezone
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
-    daily_calories_limit = models.PositiveIntegerField(default=2000, verbose_name="Calorie limit")
-    daily_protein_limit = models.PositiveIntegerField(default=150, verbose_name="Protein limit (g)")
-    daily_fat_limit = models.PositiveIntegerField(default=70, verbose_name="Fat limit (g)")
-    daily_carbs_limit = models.PositiveIntegerField(default=200, verbose_name="Carb limit (g)")
+    daily_calories_limit = models.PositiveIntegerField(default=0, verbose_name="Calorie limit")
+    daily_protein_limit = models.PositiveIntegerField(default=0, verbose_name="Protein limit (g)")
+    daily_fat_limit = models.PositiveIntegerField(default=0, verbose_name="Fat limit (g)")
+    daily_carbs_limit = models.PositiveIntegerField(default=0, verbose_name="Carb limit (g)")
 
     def __str__(self):
         return f"User limits {self.user.username}"

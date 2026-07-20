@@ -11,6 +11,15 @@
         <li><a href="{% url 'tracker:username_edit' %}">Edit Username</a></li>
         <li><a href="{% url 'tracker:password_change' %}">Change Password</a></li>
         <li><a href="{% url 'tracker:profile_edit' %}">Edit Daily Limits</a></li>
+        
+        <li style="margin-top: 15px;">
+            <form action="{% url 'logout' %}" method="post" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" style="background: #ff4d4d; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                    Logout
+                </button>
+            </form>
+        </li>
     </ul>
 
     <br>

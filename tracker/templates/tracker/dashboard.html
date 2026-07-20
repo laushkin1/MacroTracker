@@ -20,10 +20,6 @@
     <div style="text-align: right; margin-bottom: 1rem;">
         Logged in as <strong>{{ user.username }}</strong> | 
         <a href="{% url 'tracker:settings' %}">&#9881; Settings</a> | 
-        <form action="{% url 'logout' %}" method="post" style="display:inline;">
-            {% csrf_token %}
-            <button type="submit">Logout</button>
-        </form>
     </div>
 
     <h1>Macro Tracker Dashboard</h1>
@@ -40,13 +36,13 @@
         <a href="{% url 'tracker:monthly_dashboard' %}?date={{ current_date|date:'Y-m-d' }}" style="font-weight: bold; color: #0066cc;">&#128197; Switch to Monthly View</a>
     </p>
 
-    {% if profile and profile.daily_calories_limit > 0 %}
+    {% if profile %}
         <div class="summary-box">
             <h3>Daily Summary</h3>
-            <p><strong>Calories:</strong> <span class="macro-val" style="background-color: {{ colors.calories }};">{{ consumed_calories|floatformat:1 }}</span> / {{ profile.daily_calories_limit }} kcal</p>
-            <p><strong>Protein:</strong> <span class="macro-val" style="background-color: {{ colors.protein }};">{{ consumed_protein|floatformat:1 }}g</span> / {{ profile.daily_protein_limit }}g</p>
-            <p><strong>Fat:</strong> <span class="macro-val" style="background-color: {{ colors.fat }};">{{ consumed_fat|floatformat:1 }}g</span> / {{ profile.daily_fat_limit }}g</p>
-            <p><strong>Carbs:</strong> <span class="macro-val" style="background-color: {{ colors.carbs }};">{{ consumed_carbs|floatformat:1 }}g</span> / {{ profile.daily_carbs_limit }}g</p>
+            <p><strong>Calories:</strong> <span class="macro-val" style="background-color: {{ colors.calories }};">{{ consumed_calories|floatformat:1 }}</span>{% if profile.daily_calories_limit > 0 %} / {{ profile.daily_calories_limit }} kcal{% endif %}</p>
+            <p><strong>Protein:</strong> <span class="macro-val" style="background-color: {{ colors.protein }};">{{ consumed_protein|floatformat:1 }}g</span>{% if profile.daily_protein_limit > 0 %} / {{ profile.daily_protein_limit }}g{% endif %}</p>
+            <p><strong>Fat:</strong> <span class="macro-val" style="background-color: {{ colors.fat }};">{{ consumed_fat|floatformat:1 }}g</span>{% if profile.daily_fat_limit > 0 %} / {{ profile.daily_fat_limit }}g{% endif %}</p>
+            <p><strong>Carbs:</strong> <span class="macro-val" style="background-color: {{ colors.carbs }};">{{ consumed_carbs|floatformat:1 }}g</span>{% if profile.daily_carbs_limit > 0 %} / {{ profile.daily_carbs_limit }}g{% endif %}</p>
         </div>
     {% else %}
         <p>Please set up your <a href="{% url 'tracker:profile_edit' %}">user profile limits</a>.</p>
