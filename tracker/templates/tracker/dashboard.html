@@ -1,78 +1,86 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daily Macros</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 2rem; color: #333; }
-        .summary-box { border: 1px solid #ccc; padding: 1rem; border-radius: 8px; max-width: 450px; background-color: #fcfcfc; }
-        .meal-list { list-style-type: none; padding: 0; max-width: 450px; }
-        .meal-list li { margin-bottom: 0.5rem; padding: 0.8rem; background: #f0f0f0; border-radius: 6px; }
-        .meal-stats { font-size: 0.9em; color: #666; margin-top: 4px; display: block; }
-        .nav-buttons { margin-bottom: 15px; }
-        .nav-buttons a { text-decoration: none; padding: 5px 10px; background: #ddd; border-radius: 4px; color: black; }
-        .nav-buttons a:hover { background: #ccc; }
-        .macro-val { padding: 2px 6px; border-radius: 4px; font-weight: bold; color: #111; display: inline-block; min-width: 60px; text-align: center; }
-    </style>
-</head>
-<body>
-    <div style="text-align: right; margin-bottom: 1rem;">
-        Logged in as <strong>{{ user.username }}</strong> | 
-        <a href="{% url 'tracker:settings' %}">&#9881; Settings</a> | 
-    </div>
+{% extends 'tracker/base.html' %}
+{% load static %}
 
-    <h1>Macro Tracker Dashboard</h1>
-    
-    <div class="nav-buttons">
-        <a href="?date={{ prev_date|date:'Y-m-d' }}">&larr; Previous Day</a>
-        <strong style="margin: 0 15px; font-size: 1.2em;">{{ current_date|date:"M d, Y" }}</strong>
-        {% if next_date %}
-            <a href="?date={{ next_date|date:'Y-m-d' }}">Next Day &rarr;</a>
-        {% endif %}
-    </div>
+{% block title %}Dashboard{% endblock %}
 
-    <p>
-        <a href="{% url 'tracker:monthly_dashboard' %}?date={{ current_date|date:'Y-m-d' }}" style="font-weight: bold; color: #0066cc;">&#128197; Switch to Monthly View</a>
-    </p>
+{% block content %}
+    <h1>Dashboard</h1>
 
     {% if profile %}
-        <div class="summary-box">
-            <h3>Daily Summary</h3>
-            <p><strong>Calories:</strong> <span class="macro-val" style="background-color: {{ colors.calories }};">{{ consumed_calories|floatformat:1 }}</span>{% if profile.daily_calories_limit > 0 %} / {{ profile.daily_calories_limit }} kcal{% endif %}</p>
-            <p><strong>Protein:</strong> <span class="macro-val" style="background-color: {{ colors.protein }};">{{ consumed_protein|floatformat:1 }}g</span>{% if profile.daily_protein_limit > 0 %} / {{ profile.daily_protein_limit }}g{% endif %}</p>
-            <p><strong>Fat:</strong> <span class="macro-val" style="background-color: {{ colors.fat }};">{{ consumed_fat|floatformat:1 }}g</span>{% if profile.daily_fat_limit > 0 %} / {{ profile.daily_fat_limit }}g{% endif %}</p>
-            <p><strong>Carbs:</strong> <span class="macro-val" style="background-color: {{ colors.carbs }};">{{ consumed_carbs|floatformat:1 }}g</span>{% if profile.daily_carbs_limit > 0 %} / {{ profile.daily_carbs_limit }}g{% endif %}</p>
+        <div class="card">
+            <h3 style="text-align: left; margin-bottom: 15px;">Daily Summary</h3>
+            <div class="macro-row">
+                <span>Calories</span>
+                <span><span class="macro-val" style="background-color: {{ colors.calories }};">{{ consumed_calories|floatformat:1 }}</span>{% if profile.daily_calories_limit > 0 %} / {{ profile.daily_calories_limit }} kcal{% endif %}</span>
+            </div>
+            <div class="macro-row">
+                <span>Protein</span>
+                <span><span class="macro-val" style="background-color: {{ colors.protein }};">{{ consumed_protein|floatformat:1 }}g</span>{% if profile.daily_protein_limit > 0 %} / {{ profile.daily_protein_limit }}g{% endif %}</span>
+            </div>
+            <div class="macro-row">
+                <span>Fat</span>
+                <span><span class="macro-val" style="background-color: {{ colors.fat }};">{{ consumed_fat|floatformat:1 }}g</span>{% if profile.daily_fat_limit > 0 %} / {{ profile.daily_fat_limit }}g{% endif %}</span>
+            </div>
+            <div class="macro-row">
+                <span>Carbs</span>
+                <span><span class="macro-val" style="background-color: {{ colors.carbs }};">{{ consumed_carbs|floatformat:1 }}g</span>{% if profile.daily_carbs_limit > 0 %} / {{ profile.daily_carbs_limit }}g{% endif %}</span>
+            </div>
         </div>
     {% else %}
-        <p>Please set up your <a href="{% url 'tracker:profile_edit' %}">user profile limits</a>.</p>
+        <div class="card" style="text-align: center;">
+            <p>Please set up your user profile limits.</p>
+            <a href="{% url 'tracker:profile_edit' %}" class="btn">Set Limits</a>
+        </div>
     {% endif %}
 
-    <div style="margin-top: 15px; margin-bottom: 20px;">
-        <a href="{% url 'tracker:dashboard' %}" style="text-decoration: none; font-size: 0.9em; color: #444; background: #e9e9e9; padding: 6px 12px; border-radius: 4px; border: 1px solid #ccc; font-weight: bold;">&#127968; Go Home</a>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <h3 style="margin: 0;">Meals</h3>
+        <a href="{% url 'tracker:meallog_create' %}?date={{ current_date|date:'Y-m-d' }}" class="btn btn-outline" style="width: auto; padding: 8px 15px; margin: 0;">+ Add</a>
     </div>
-
-    <h3>Meals <a href="{% url 'tracker:meallog_create' %}?date={{ current_date|date:'Y-m-d' }}" style="font-size: 0.8em; margin-left: 10px;">+ Add Meal</a></h3>
-    <p><a href="{% url 'tracker:food_list' %}?date={{ current_date|date:'Y-m-d' }}">Manage Food Database</a></p>
     
     {% if meals %}
         <ul class="meal-list">
             {% for meal in meals %}
                 <li>
-                    <strong>{{ meal.food.name }}</strong> &mdash; {{ meal.weight_grams }}g
-                    <a href="{% url 'tracker:meallog_update' meal.pk %}" style="font-size: 0.8em; margin-left: 10px;">Edit</a>
-                    <a href="{% url 'tracker:meallog_delete' meal.pk %}" style="font-size: 0.8em; color: red;">Delete</a>
-                    <span class="meal-stats">
-                        Cal: {{ meal.total_calories|floatformat:1 }} | 
-                        P: {{ meal.total_protein|floatformat:1 }}g | 
-                        F: {{ meal.total_fat|floatformat:1 }}g | 
-                        C: {{ meal.total_carbs|floatformat:1 }}g
-                    </span>
+                    <div class="meal-header">
+                        <span>{{ meal.food.name }}</span>
+                        <span>{{ meal.weight_grams }}g</span>
+                    </div>
+                    <div class="meal-stats">
+                        Cal: {{ meal.total_calories|floatformat:1 }} | P: {{ meal.total_protein|floatformat:1 }}g | F: {{ meal.total_fat|floatformat:1 }}g | C: {{ meal.total_carbs|floatformat:1 }}g
+                    </div>
+                    <div class="meal-actions">
+                        <a href="{% url 'tracker:meallog_update' meal.pk %}">Edit</a>
+                        <a href="{% url 'tracker:meallog_delete' meal.pk %}" class="delete">Delete</a>
+                    </div>
                 </li>
             {% endfor %}
         </ul>
     {% else %}
-        <p>No meals logged for this date.</p>
+        <p style="margin-top: 20px;">No meals logged for this date.</p>
     {% endif %}
-</body>
-</html>
+
+    <div style="margin-top: 30px; display: flex; flex-direction: column; gap: 10px;">
+        <a href="{% url 'tracker:food_list' %}?date={{ current_date|date:'Y-m-d' }}" class="btn btn-outline">Manage Food Database</a>
+        <a href="{% url 'tracker:settings' %}" class="btn btn-outline">⚙️ Settings</a>
+    </div>
+
+    <div class="date-nav">
+        <a href="?date={{ prev_date|date:'Y-m-d' }}" class="nav-arrow">&lt;</a>
+        
+        {% now "Y-m-d" as today_str %}
+        {% if current_date|date:"Y-m-d" != today_str %}
+            <a href="{% url 'tracker:dashboard' %}" class="nav-arrow" style="border: none; background: transparent; font-size: 22px;">🏠</a>
+        {% endif %}
+
+        <a href="{% url 'tracker:monthly_dashboard' %}?date={{ current_date|date:'Y-m-d' }}" class="nav-date">
+            📅 {{ current_date|date:"M d, Y" }}
+        </a>
+
+        {% if next_date %}
+            <a href="?date={{ next_date|date:'Y-m-d' }}" class="nav-arrow">&gt;</a>
+        {% else %}
+            <div style="width: 44px;"></div>
+        {% endif %}
+    </div>
+{% endblock %}

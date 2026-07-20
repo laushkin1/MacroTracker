@@ -1,20 +1,20 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Add via Barcode</title>
-</head>
-<body style="font-family: Arial, sans-serif; margin: 2rem;">
-    <h2>Scan or Enter Barcode</h2>
-    <form method="post" action="{% url 'tracker:add_by_barcode' %}{% if origin_date %}?date={{ origin_date }}{% endif %}">
-        {% csrf_token %}
-        <p>
-            <label>Barcode:</label><br>
-            <input type="text" name="barcode" required style="padding: 5px; width: 250px;">
-        </p>
-        <button type="submit" style="padding: 6px 12px; background: #0066cc; color: white; border: none; border-radius: 4px;">Search on OpenFoodFacts</button>
-    </form>
-    <br>
-    <a href="{% url 'tracker:food_create' %}{% if origin_date %}?date={{ origin_date }}{% endif %}">Cancel</a>
-</body>
-</html>
+{% extends 'tracker/base.html' %}
+
+{% block title %}Add via Barcode{% endblock %}
+
+{% block content %}
+    <h2>Scan Barcode</h2>
+    
+    <div class="card">
+        <form method="post" action="{% url 'tracker:add_by_barcode' %}{% if origin_date %}?date={{ origin_date }}{% endif %}">
+            {% csrf_token %}
+            <label style="display: block; font-weight: bold; margin-bottom: 10px;">Enter Barcode Number:</label>
+            <input type="text" name="barcode" required placeholder="e.g. 5000112637922">
+            <button type="submit" class="btn">Search</button>
+        </form>
+    </div>
+
+    <div style="text-align: center;">
+        <a href="{% url 'tracker:food_create' %}{% if origin_date %}?date={{ origin_date }}{% endif %}">&larr; Cancel</a>
+    </div>
+{% endblock %}

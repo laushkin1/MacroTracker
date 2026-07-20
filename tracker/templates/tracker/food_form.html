@@ -1,33 +1,33 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Food Form</title>
-</head>
-<body style="font-family: Arial; margin: 2rem;">
+{% extends 'tracker/base.html' %}
+
+{% block title %}{% if object %}Edit{% else %}Add{% endif %} Food{% endblock %}
+
+{% block content %}
     <h2>{% if object %}Edit{% else %}Add{% endif %} Food</h2>
 
     {% if messages %}
-        <div style="color: red; margin-bottom: 15px; font-weight: bold;">
+        <div class="card" style="background-color: #ffe6e6; border-color: var(--danger); padding: 15px;">
             {% for message in messages %}
-                <p>&#9888; {{ message }}</p>
+                <p style="color: var(--danger); margin: 0; font-weight: bold; text-align: left;">&#9888; {{ message }}</p>
             {% endfor %}
         </div>
     {% endif %}
 
     {% if not object %}
-        <a href="{% url 'tracker:add_by_barcode' %}{% if origin_date %}?date={{ origin_date }}{% endif %}" style="display:inline-block; margin-bottom: 15px; padding: 6px 12px; background: #e0e0e0; border: 1px solid #ccc; text-decoration: none; color: black; border-radius: 4px;">
-            &#128247; Add via Barcode
+        <a href="{% url 'tracker:add_by_barcode' %}{% if origin_date %}?date={{ origin_date }}{% endif %}" class="btn btn-outline" style="margin-bottom: 20px;">
+            &#128247; Add via Barcode (OpenFoodFacts)
         </a>
     {% endif %}
 
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Save Food</button>
-    </form>
-    <br>
-    <!-- Возвращаемся в список с сохранением даты -->
-    <a href="{% url 'tracker:food_list' %}{% if origin_date %}?date={{ origin_date }}{% endif %}">Cancel</a>
-</body>
-</html>
+    <div class="card">
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn" style="margin-top: 10px;">Save Food</button>
+        </form>
+    </div>
+
+    <div style="text-align: center;">
+        <a href="{% url 'tracker:food_list' %}{% if origin_date %}?date={{ origin_date }}{% endif %}">&larr; Cancel</a>
+    </div>
+{% endblock %}

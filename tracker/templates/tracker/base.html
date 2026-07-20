@@ -1,0 +1,36 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>{% block title %}Macro Tracker{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <div class="container">
+        {% block content %}
+        <!-- Content from other pages -->
+        {% endblock %}
+    </div>
+    <script>
+        const usernameInput = document.getElementById('id_username');
+        const helpText = document.querySelector('.helptext');
+        
+        if (usernameInput && helpText) {
+            usernameInput.addEventListener('input', function() {
+                const isValid = /^[\w.@+-]{0,150}$/.test(this.value);
+                
+                if (!isValid) {
+                    helpText.style.display = 'block';
+                    helpText.style.color = 'var(--danger)';
+                    usernameInput.style.borderColor = 'var(--danger)';
+                } else {
+                    helpText.style.display = 'none';
+                    usernameInput.style.borderColor = 'var(--border)';
+                }
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,28 +1,26 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Settings</title>
-</head>
-<body style="font-family: Arial, sans-serif; margin: 2rem;">
-    <h2>&#9881; Settings</h2>
-    
-    <ul style="line-height: 2;">
-        <li><a href="{% url 'tracker:username_edit' %}">Edit Username</a></li>
-        <li><a href="{% url 'tracker:password_change' %}">Change Password</a></li>
-        <li><a href="{% url 'tracker:profile_edit' %}">Edit Daily Limits</a></li>
-        
-        <li style="margin-top: 15px;">
-            <form action="{% url 'logout' %}" method="post" style="display:inline;">
-                {% csrf_token %}
-                <button type="submit" style="background: #ff4d4d; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">
-                    Logout
-                </button>
-            </form>
-        </li>
-    </ul>
+{% extends 'tracker/base.html' %}
 
-    <br>
-    <a href="{% url 'tracker:dashboard' %}">&larr; Back to Dashboard</a>
-</body>
-</html>
+{% block title %}Settings{% endblock %}
+
+{% block content %}
+    <h2>⚙️ Settings</h2>
+    
+    <div class="card">
+        <a href="{% url 'tracker:username_edit' %}" class="btn btn-outline">Change Username</a>
+        <a href="{% url 'tracker:password_change' %}" class="btn btn-outline">Change Password</a>
+        <a href="{% url 'tracker:profile_edit' %}" class="btn btn-outline">Edit Daily Limits</a>
+        
+        <div style="margin-top: 25px; border-top: 1px solid var(--border); padding-top: 25px;">
+            <form action="{% url 'logout' %}" method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">Logout</button>
+            </form>
+        </div>
+    </div>
+
+    <p style="margin-top: 20px;">Logged in as <strong>{{ user.username }}</strong></p>
+    
+    <div style="text-align: center; margin-top: 20px;">
+        <a href="{% url 'tracker:dashboard' %}">&larr; Back to Dashboard</a>
+    </div>
+{% endblock %}

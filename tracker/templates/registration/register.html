@@ -1,24 +1,17 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register - Macro Tracker</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 2rem; }
-        .form-container { max-width: 300px; padding: 1rem; border: 1px solid #ccc; border-radius: 8px; }
-        button { margin-top: 10px; padding: 5px 10px; }
-    </style>
-</head>
-<body>
-    <div class="form-container">
-        <h2>Create an Account</h2>
+{% extends 'tracker/base.html' %}
+
+{% block title %}Register - Macro Tracker{% endblock %}
+
+{% block content %}
+    <h2>Create an Account</h2>
+    
+    <div class="card">
         <form method="post">
             {% csrf_token %}
             {{ form.as_p }}
-            <button type="submit">Sign Up</button>
+            <button type="submit" class="btn">Sign Up</button>
         </form>
-        <p>Already have an account? <a href="{% url 'login' %}">Login here</a></p>
     </div>
-</body>
-</html>
+
+    <p>Already have an account? <a href="{% url 'login' %}">Login here</a></p>
+{% endblock %}

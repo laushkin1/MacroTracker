@@ -1,49 +1,46 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Meal Log Form</title>
-    <style>
-        .food-item { padding: 8px; cursor: pointer; border-bottom: 1px solid #eee; background: #fff; }
-        .food-item:hover { background: #f0f0f0; }
-        #food_list_container { max-height: 200px; overflow-y: auto; border: 1px solid #ccc; display: none; width: 300px; position: absolute; z-index: 1000; box-shadow: 0px 4px 6px rgba(0,0,0,0.1); }
-        .form-group { margin-bottom: 15px; }
-    </style>
-</head>
-<body style="font-family: Arial; margin: 2rem;">
+{% extends 'tracker/base.html' %}
+
+{% block title %}{% if object %}Edit{% else %}Add{% endif %} Meal{% endblock %}
+
+{% block content %}
     <h2>{% if object %}Edit{% else %}Add{% endif %} Meal</h2>
     
-    <form method="post">
-        {% csrf_token %}
-        
-        <div class="form-group">
-            <label style="display: block; font-weight: bold;">1. Food:</label>
-            <div style="position: relative;">
-                <input type="text" id="food_search" placeholder="Type to search food or barcode..." style="width: 300px; padding: 5px;" autocomplete="off">
-                <a href="{% url 'tracker:food_create' %}" style="margin-left: 10px; font-size: 0.9em;">+ Add new food</a>
-                <div id="food_list_container"></div>
+    <div class="card">
+        <form method="post">
+            {% csrf_token %}
+            
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; font-weight: bold; margin-bottom: 8px;">1. Food:</label>
+                <div style="position: relative;">
+                    <input type="text" id="food_search" placeholder="Search food or barcode..." autocomplete="off">
+                    <div id="food_list_container" style="max-height: 200px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; display: none; background: #fff; position: absolute; width: 100%; z-index: 10; box-shadow: 0 4px 12px rgba(0,0,0,0.1);"></div>
+                </div>
+                <div style="text-align: right; margin-top: 5px;">
+                    <a href="{% url 'tracker:food_create' %}" style="font-size: 0.9em; color: var(--text-muted);">+ Add new food to database</a>
+                </div>
+                <input type="hidden" name="food" id="id_food" required>
+                <div style="color: var(--danger);">{{ form.food.errors }}</div>
             </div>
-            <!-- Скрытое поле для передачи ID в Django -->
-            <input type="hidden" name="food" id="id_food" required>
-            <div style="color: red;">{{ form.food.errors }}</div>
-        </div>
 
-        <div class="form-group">
-            <label for="id_weight_grams" style="display: block; font-weight: bold;">2. Portion weight (in grams):</label>
-            {{ form.weight_grams }}
-            <div style="color: red;">{{ form.weight_grams.errors }}</div>
-        </div>
+            <div style="margin-bottom: 20px;">
+                <label for="id_weight_grams" style="display: block; font-weight: bold; margin-bottom: 8px;">2. Portion weight (in grams):</label>
+                {{ form.weight_grams }}
+                <div style="color: var(--danger);">{{ form.weight_grams.errors }}</div>
+            </div>
 
-        <div class="form-group">
-            <label for="id_date" style="display: block; font-weight: bold;">3. Date of meal:</label>
-            {{ form.date }}
-            <div style="color: red;">{{ form.date.errors }}</div>
-        </div>
+            <div style="margin-bottom: 20px;">
+                <label for="id_date" style="display: block; font-weight: bold; margin-bottom: 8px;">3. Date of meal:</label>
+                {{ form.date }}
+                <div style="color: var(--danger);">{{ form.date.errors }}</div>
+            </div>
 
-        <button type="submit" style="padding: 6px 12px;">Save Meal</button>
-    </form>
-    <br>
-    <a href="javascript:history.back()">Cancel</a>
+            <button type="submit" class="btn">Save Meal</button>
+        </form>
+    </div>
+
+    <div style="text-align: center;">
+        <a href="javascript:history.back()">&larr; Cancel</a>
+    </div>
 
     <script>
         const foods = {{ foods_json|safe }};
@@ -51,7 +48,6 @@
         const listContainer = document.getElementById('food_list_container');
         const hiddenInput = document.getElementById('id_food');
 
-        // Если это режим редактирования, заполняем инпут текущим блюдом
         {% if object %}
             hiddenInput.value = "{{ object.food.id }}";
             searchInput.value = "{{ object.food.name }}";
@@ -67,7 +63,9 @@
             
             items.forEach(item => {
                 const div = document.createElement('div');
-                div.className = 'food-item';
+                div.style.padding = '12px 15px';
+                div.style.cursor = 'pointer';
+                div.style.borderBottom = '1px solid #eee';
                 div.textContent = item.name;
                 
                 div.onclick = () => {
@@ -85,34 +83,16 @@
                 renderList(foods);
                 return;
             }
-
-            // Ищем совпадения с начала слова
-            const startsWith = foods.filter(f => 
-                f.name.toLowerCase().startsWith(query) || 
-                (f.barcode && f.barcode.startsWith(query))
-            );
-
-            // Ищем совпадения внутри слова (но исключаем те, что уже попали в startsWith)
-            const contains = foods.filter(f => 
-                !startsWith.includes(f) && 
-                (f.name.toLowerCase().includes(query) || (f.barcode && f.barcode.includes(query)))
-            );
-
-            // Объединяем результаты
+            const startsWith = foods.filter(f => f.name.toLowerCase().startsWith(query) || (f.barcode && f.barcode.startsWith(query)));
+            const contains = foods.filter(f => !startsWith.includes(f) && (f.name.toLowerCase().includes(query) || (f.barcode && f.barcode.includes(query))));
             renderList([...startsWith, ...contains]);
         });
 
-        // Показать список при клике на инпут
-        searchInput.addEventListener('focus', () => {
-            searchInput.dispatchEvent(new Event('input'));
-        });
-
-        // Скрыть список при клике вне его
+        searchInput.addEventListener('focus', () => searchInput.dispatchEvent(new Event('input')));
         document.addEventListener('click', (e) => {
             if (e.target !== searchInput && e.target !== listContainer) {
                 listContainer.style.display = 'none';
             }
         });
     </script>
-</body>
-</html>
+{% endblock %}

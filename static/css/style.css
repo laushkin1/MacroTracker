@@ -1,0 +1,193 @@
+:root {
+    --bg: #fafafa;
+    --card-bg: #ffffff;
+    --text-main: #222222;
+    --text-muted: #888888;
+    --border: #e5e5e5;
+    --primary: #000000;
+    --primary-hover: #333333;
+    --danger: #ff4d4d;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg);
+    color: var(--text-main);
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+/* Main container that centers the content */
+.container {
+    width: 100%;
+    max-width: 500px;
+    padding-bottom: 90px; /* Add some space at the bottom so the mobile menu doesn't overlap the content */
+}
+
+h1, h2, h3 {
+    text-align: center;
+    margin-bottom: 20px;
+    font-weight: 600;
+}
+
+p {
+    text-align: center;
+    margin-bottom: 15px;
+    color: var(--text-muted);
+}
+
+/* Forms and Summary Sheets */
+.card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+}
+
+/* Large, user-friendly form fields */
+input, select {
+    width: 100%;
+    padding: 14px;
+    margin-bottom: 15px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 16px;
+    background: var(--bg);
+}
+
+/* Buttons */
+.btn {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    background-color: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+    margin-bottom: 10px;
+}
+.btn:hover { background-color: var(--primary-hover); }
+.btn-outline { background-color: transparent; color: var(--text-main); border: 1px solid var(--border); }
+.btn-outline:hover { 
+    background-color: var(--primary-hover); 
+    color: white;
+}
+.btn-danger { background-color: var(--danger); }
+
+.helptext {
+    display: none;
+    font-size: 0.85em;
+    margin-top: -10px;
+    margin-bottom: 15px;
+}
+
+/* Links */
+a {
+    color: var(--text-main);
+    text-decoration: none;
+    font-weight: 500;
+}
+a:hover { text-decoration: underline; }
+
+/* Date Navigation Block */
+.date-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--card-bg);
+    padding: 15px 20px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 25px;
+}
+
+.date-nav a.nav-arrow {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 44px;
+    height: 44px;
+    background: var(--bg);
+    border-radius: 50%;
+    font-size: 18px;
+    color: var(--text-main);
+    border: 1px solid var(--border);
+}
+
+.date-nav a.nav-date {
+    font-size: 1.1em;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Food lists */
+.meal-list { list-style: none; }
+.meal-list li {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 10px;
+}
+.meal-header {
+    display: flex;
+    justify-content: space-between;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+.meal-stats { font-size: 0.85em; color: var(--text-muted); }
+.meal-actions { margin-top: 10px; display: flex; gap: 15px; font-size: 0.9em; }
+.meal-actions a.delete { color: var(--danger); }
+
+/* Macro Templates */
+.macro-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+}
+.macro-row:last-child { border-bottom: none; }
+.macro-val {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-weight: 600;
+    color: #000;
+    font-size: 0.9em;
+}
+
+/* Mobile navigation (sticks to the bottom on phones) */
+@media (max-width: 600px) {
+    .date-nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        margin: 0;
+        border-radius: 0;
+        border-top: 1px solid var(--border);
+        border-bottom: none;
+        border-left: none;
+        border-right: none;
+        z-index: 1000;
+        box-shadow: 0 -4px 10px rgba(0,0,0,0.05);
+        padding-bottom: env(safe-area-inset-bottom, 15px); /* For iPhone */
+    }
+}
+
