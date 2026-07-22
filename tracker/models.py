@@ -32,7 +32,7 @@ class MealLog(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='meal_logs')
     food = models.ForeignKey(Food, on_delete=models.CASCADE, related_name='logs')
     date = models.DateField(default=timezone.now, verbose_name="Date of meal")
-    weight_grams = models.PositiveIntegerField(verbose_name="Portion weight (in grams)")
+    weight_grams = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Portion weight (in grams)")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

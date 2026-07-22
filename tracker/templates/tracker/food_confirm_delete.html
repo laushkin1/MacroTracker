@@ -3,7 +3,7 @@
 {% block content %}
     <h2>Delete Food</h2>
     <div class="card" style="text-align: center;">
-        <p style="font-size: 1.1em; margin-bottom: 20px;">Are you sure you want to delete <strong>"{{ object.name }}"</strong>?</p>
+        <p style="font-size: 1.1em; margin-bottom: 20px;">Are you sure you want to delete <strong>"{{ object.name }}"</strong> from Food Database?</p>
         <form method="post">
             {% csrf_token %}
             <button type="submit" class="btn btn-danger">Yes, delete it</button>

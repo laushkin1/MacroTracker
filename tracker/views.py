@@ -1,6 +1,6 @@
 import calendar
 from django.contrib import messages
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -337,6 +337,19 @@ class MealLogDeleteView(LoginRequiredMixin, DeleteView):
 
     def get_queryset(self):
         return MealLog.objects.filter(user=self.request.user)
+
+
+@login_required
+def duplicate_meal(request, pk):
+    meal = get_object_or_404(MealLog, pk=pk, user=request.user)
+    MealLog.objects.create(
+        user=request.user,
+        food=meal.food,
+        date=meal.date,
+        weight_grams=meal.weight_grams
+    )
+    date_param = meal.date.isoformat()
+    return redirect(f"{reverse('tracker:dashboard')}?date={date_param}")
 
 
 class ProfileUpdateView(LoginRequiredMixin, UpdateView):

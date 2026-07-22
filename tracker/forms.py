@@ -17,8 +17,19 @@ class MealLogForm(forms.ModelForm):
         model = MealLog
         fields = ['food', 'date', 'weight_grams']
         widgets = {
-            'date': forms.DateInput(attrs={'type': 'date'})
+            'date': forms.DateInput(attrs={'type': 'date'}),
+            'weight_grams': forms.NumberInput(attrs={'step': 'any', 'min': '0.01', 'placeholder': 'e.g. 150.5'})
         }
+
+    def full_clean(self):
+        if self.is_bound and self.data:
+            weight_val = self.data.get('weight_grams')
+            if isinstance(weight_val, str) and ',' in weight_val:
+                mutable_data = self.data.copy()
+                mutable_data['weight_grams'] = weight_val.replace(',', '.')
+                self.data = mutable_data
+        super().full_clean()
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Set the max attribute dynamically to today

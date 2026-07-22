@@ -17,6 +17,7 @@ urlpatterns = [
     
     # MealLog Routes
     path('meal/add/', views.MealLogCreateView.as_view(), name='meallog_create'),
+    path('meal/<int:pk>/duplicate/', views.duplicate_meal, name='meallog_duplicate'),
     path('meal/<int:pk>/edit/', views.MealLogUpdateView.as_view(), name='meallog_update'),
     path('meal/<int:pk>/delete/', views.MealLogDeleteView.as_view(), name='meallog_delete'),
 
