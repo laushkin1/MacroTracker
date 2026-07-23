@@ -20,6 +20,7 @@ __pycache__/
 local_settings.py
 media/
 static_root/
+staticfiles/
 
 # IDE and OS files
 .vscode/
