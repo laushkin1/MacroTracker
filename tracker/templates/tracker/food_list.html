@@ -26,20 +26,32 @@
     
     <ul id="food_list_container" class="meal-list" style="margin-top: 15px;">
         {% for food in foods %}
-            <li class="food-item" data-name="{{ food.name|lower }}" data-barcode="{{ food.barcode|default:''|lower }}">
+            <li class="meal-container food-item" data-name="{{ food.name|lower }}" data-barcode="{{ food.barcode|default:''|lower }}">
                 <div class="meal-header">
-                    <span>{{ food.name }}</span>
+                    <span class="meal-title">{{ food.name }}</span>
+                    <div class="meal-right">
+                        <!-- 3-dot menu for food -->
+                        <div class="dropdown">
+                            <button type="button" class="dropdown-btn" aria-label="Food options">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                    <circle cx="12" cy="5" r="2"/>
+                                    <circle cx="12" cy="12" r="2"/>
+                                    <circle cx="12" cy="19" r="2"/>
+                                </svg>
+                            </button>
+                            <div class="dropdown-menu">
+                                <a href="{% url 'tracker:food_update' food.pk %}{% if origin_date %}?date={{ origin_date }}{% endif %}" class="dropdown-item">Edit</a>
+                                <a href="{% url 'tracker:food_delete' food.pk %}{% if origin_date %}?date={{ origin_date }}{% endif %}" class="dropdown-item delete">Delete</a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="meal-stats" style="margin-bottom: 10px;">
+                <div class="meal-stats">
                     Cal: {{ food.calories|floatformat:1 }} | P: {{ food.protein|floatformat:1 }}g | F: {{ food.fat|floatformat:1 }}g | C: {{ food.carbs|floatformat:1 }}g
-                </div>
-                <div class="meal-actions">
-                    <a href="{% url 'tracker:food_update' food.pk %}{% if origin_date %}?date={{ origin_date }}{% endif %}">Edit</a>
-                    <a href="{% url 'tracker:food_delete' food.pk %}{% if origin_date %}?date={{ origin_date }}{% endif %}" class="delete">Delete</a>
                 </div>
             </li>
         {% empty %}
-            <p>No food in database yet.</p>
+            <p style="text-align: center; margin-top: 20px;">No food in database yet.</p>
         {% endfor %}
     </ul>
 
@@ -48,19 +60,47 @@
     </div>
 
     <script>
-        const searchInput = document.getElementById('food_search');
-        const items = document.querySelectorAll('.food-item');
+        document.addEventListener('DOMContentLoaded', function () {
+            // --- Live Search ---
+            const searchInput = document.getElementById('food_search');
+            const items = document.querySelectorAll('.food-item');
 
-        searchInput.addEventListener('input', (e) => {
-            const query = e.target.value.toLowerCase().trim();
-            items.forEach(item => {
-                const name = item.getAttribute('data-name');
-                const barcode = item.getAttribute('data-barcode');
-                if (name.includes(query) || barcode.includes(query)) {
-                    item.style.display = '';
-                } else {
-                    item.style.display = 'none';
-                }
+            searchInput.addEventListener('input', (e) => {
+                const query = e.target.value.toLowerCase().trim();
+                items.forEach(item => {
+                    const name = item.getAttribute('data-name');
+                    const barcode = item.getAttribute('data-barcode');
+                    if (name.includes(query) || barcode.includes(query)) {
+                        item.style.display = '';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            });
+
+            // --- Dropdown menus logic (copied from dashboard) ---
+            document.querySelectorAll('.dropdown').forEach(function (dropdown) {
+                const btn = dropdown.querySelector('.dropdown-btn');
+                const menu = dropdown.querySelector('.dropdown-menu');
+
+                btn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    const isOpen = menu.classList.contains('show');
+                    document.querySelectorAll('.dropdown-menu.show').forEach(m => m.classList.remove('show'));
+                    if (!isOpen) menu.classList.add('show');
+                });
+
+                dropdown.addEventListener('mouseleave', function () {
+                    menu.classList.remove('show');
+                });
+            });
+
+            document.addEventListener('click', function (e) {
+                document.querySelectorAll('.dropdown-menu.show').forEach(function (menu) {
+                    if (!menu.closest('.dropdown').contains(e.target)) {
+                        menu.classList.remove('show');
+                    }
+                });
             });
         });
     </script>
