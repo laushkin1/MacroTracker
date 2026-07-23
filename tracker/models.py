@@ -17,8 +17,8 @@ class UserProfile(models.Model):
 class Food(models.Model):
     name = models.CharField(max_length=255, unique=True, verbose_name="Product name")
     # Field for parsing from OpenFoodFacts
-    barcode = models.CharField(max_length=50, blank=True, null=True, verbose_name="Barcode (for API)") 
-    
+    barcode = models.CharField(max_length=50, blank=True, null=True, verbose_name="Barcode (for API)")
+
     calories = models.DecimalField(max_digits=6, decimal_places=1, default=0, verbose_name="Calories (per 100g)")
     protein = models.DecimalField(max_digits=5, decimal_places=1, default=0, verbose_name="Protein (per 100g)")
     fat = models.DecimalField(max_digits=5, decimal_places=1, default=0, verbose_name="Fat (per 100g)")
@@ -26,21 +26,54 @@ class Food(models.Model):
 
     def __str__(self):
         return self.name
-    
 
-class MealLog(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='meal_logs')
-    food = models.ForeignKey(Food, on_delete=models.CASCADE, related_name='logs')
-    date = models.DateField(default=timezone.now, verbose_name="Date of meal")
-    weight_grams = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Portion weight (in grams)")
+
+class Meal(models.Model):
+    """A meal container (e.g. Breakfast, Lunch) grouping multiple food items."""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='meals')
+    name = models.CharField(max_length=255, verbose_name="Meal name")
+    date = models.DateField(default=timezone.now, verbose_name="Date")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ['-date', '-created_at']
 
     def __str__(self):
-        return f"{self.food.name} - {self.weight_grams}g ({self.date})"
+        return f"{self.name} ({self.date})"
 
+    @property
+    def total_weight(self):
+        return sum(item.weight_grams for item in self.items.all())
+
+    @property
+    def total_calories(self):
+        return sum(item.total_calories for item in self.items.all())
+
+    @property
+    def total_protein(self):
+        return sum(item.total_protein for item in self.items.all())
+
+    @property
+    def total_fat(self):
+        return sum(item.total_fat for item in self.items.all())
+
+    @property
+    def total_carbs(self):
+        return sum(item.total_carbs for item in self.items.all())
+
+
+class MealItem(models.Model):
+    """A single food entry inside a Meal container."""
+    meal = models.ForeignKey(Meal, on_delete=models.CASCADE, related_name='items')
+    food = models.ForeignKey(Food, on_delete=models.CASCADE, related_name='meal_items')
+    weight_grams = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Portion weight (in grams)")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f"{self.food.name} - {self.weight_grams}g"
 
     @property
     def total_calories(self):
@@ -57,4 +90,3 @@ class MealLog(models.Model):
     @property
     def total_carbs(self):
         return (self.food.carbs * self.weight_grams) / 100
-    

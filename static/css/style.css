@@ -83,8 +83,8 @@ input, select {
 }
 .btn:hover { background-color: var(--primary-hover); }
 .btn-outline { background-color: transparent; color: var(--text-main); border: 1px solid var(--border); }
-.btn-outline:hover { 
-    background-color: var(--primary-hover); 
+.btn-outline:hover {
+    background-color: var(--primary-hover);
     color: white;
 }
 .btn-danger { background-color: var(--danger); }
@@ -137,15 +137,23 @@ a:hover { text-decoration: underline; }
     gap: 8px;
 }
 
-/* Food lists */
+/* ============================================================
+   MEAL CONTAINERS (new structure)
+   ============================================================ */
+
+/* Container list */
 .meal-list { list-style: none; }
-.meal-list li {
+
+/* Container card (the "Meal" — e.g. Breakfast) */
+.meal-container {
     background: var(--card-bg);
     border: 1px solid var(--border);
     border-radius: 12px;
     padding: 15px;
     margin-bottom: 10px;
 }
+
+/* Header row: title on left, weight + buttons on right */
 .meal-header {
     display: flex;
     justify-content: space-between;
@@ -153,23 +161,83 @@ a:hover { text-decoration: underline; }
     font-weight: bold;
     margin-bottom: 5px;
 }
-.meal-title {
-    padding-top: 0;
-}
+
+.meal-title { padding-top: 0; }
+
 .meal-right {
     display: flex;
     flex-direction: row;
     align-items: center;
     gap: 6px;
 }
-.meal-weight {
-    font-size: 0.95em;
-}
-.meal-stats { font-size: 0.85em; color: var(--text-muted); }
-.meal-actions { margin-top: 10px; display: flex; gap: 15px; font-size: 0.9em; }
-.meal-actions a.delete { color: var(--danger); }
 
-/* Dropdown Menu */
+.meal-weight { font-size: 0.95em; }
+
+.meal-stats { font-size: 0.85em; color: var(--text-muted); }
+
+/* ---- Expanded food items wrapper ---- */
+.meal-items-wrapper {
+    display: none;                /* collapsed by default */
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+}
+
+.meal-container.expanded .meal-items-wrapper {
+    display: block;
+}
+
+/* Individual food item inside a container — indented, same right edge */
+.meal-item {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 12px 10px;
+    margin-bottom: 8px;
+    margin-left: 16px;   /* visual indent to distinguish from container */
+}
+
+/* "Add Food" button inside expanded container */
+.meal-add-food-btn {
+    margin-left: 16px;
+    margin-top: 4px;
+    padding: 10px 14px;
+    font-size: 0.9em;
+    width: calc(100% - 16px);
+}
+
+/* ---- Toggle arrow button ---- */
+.toggle-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 4px 4px;
+    border-radius: 4px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.15s, color 0.15s;
+    /* Make it large enough to tap comfortably on mobile */
+    min-width: 32px;
+    min-height: 32px;
+}
+
+.toggle-btn:hover,
+.toggle-btn:focus {
+    background-color: rgba(0,0,0,0.06);
+    color: var(--text-main);
+    outline: none;
+}
+
+.arrow-icon {
+    transition: transform 0.2s ease;
+    display: block;
+}
+
+/* ============================================================
+   DROPDOWN MENU
+   ============================================================ */
 .dropdown {
     position: relative;
     display: inline-block;
@@ -211,9 +279,7 @@ a:hover { text-decoration: underline; }
     padding: 4px 0;
 }
 
-.dropdown-menu.show {
-    display: block;
-}
+.dropdown-menu.show { display: block; }
 
 .dropdown-item {
     display: flex;
@@ -224,6 +290,7 @@ a:hover { text-decoration: underline; }
     color: var(--text-main);
     text-decoration: none;
     transition: background-color 0.15s;
+    font-weight: 500;
 }
 
 .dropdown-item:hover {
@@ -231,15 +298,12 @@ a:hover { text-decoration: underline; }
     text-decoration: none;
 }
 
-.dropdown-item.delete {
-    color: var(--danger);
-}
+.dropdown-item.delete { color: var(--danger); }
+.dropdown-item.delete:hover { background-color: rgba(255, 77, 77, 0.08); }
 
-.dropdown-item.delete:hover {
-    background-color: rgba(255, 77, 77, 0.08);
-}
-
-/* Macro Templates */
+/* ============================================================
+   MACRO SUMMARY ROWS
+   ============================================================ */
 .macro-row {
     display: flex;
     justify-content: space-between;
@@ -255,7 +319,62 @@ a:hover { text-decoration: underline; }
     font-size: 0.9em;
 }
 
-/* Mobile navigation (sticks to the bottom on phones) */
+/* ============================================================
+   MEAL FORM — dynamic food rows
+   ============================================================ */
+.food-row-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 10px;
+}
+
+.food-row-inner { position: relative; }
+
+.food-search-item {
+    padding: 12px 15px;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+    font-size: 15px;
+}
+.food-search-item:hover { background: rgba(0,0,0,0.04); }
+.food-search-item:last-child { border-bottom: none; }
+
+.food-list-container {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    display: none;
+    background: #fff;
+    position: absolute;
+    width: 100%;
+    z-index: 10;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.remove-row-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    padding: 6px 8px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    transition: background-color 0.15s, color 0.15s;
+    flex-shrink: 0;
+}
+.remove-row-btn:hover {
+    background: rgba(255,77,77,0.08);
+    color: var(--danger);
+    border-color: var(--danger);
+}
+
+/* ============================================================
+   MOBILE NAV
+   ============================================================ */
 @media (max-width: 600px) {
     .date-nav {
         position: fixed;
@@ -273,4 +392,3 @@ a:hover { text-decoration: underline; }
         padding-bottom: env(safe-area-inset-bottom, 15px); /* For iPhone */
     }
 }
-

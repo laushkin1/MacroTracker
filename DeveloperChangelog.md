@@ -25,3 +25,11 @@
 - UI/UX: Moved the Home button to the top of the Dashboard.
 - Fix: Displayed the product name in the deletion confirmation prompt for meals to match the behavior of product deletion.
 - UI/UX: Added a 3-dots context menu to meal items containing Dublicate, Edit and Delete actions.
+
+### 2026-07-23
+- Refactor: Replaced the flat MealLog system with a hierarchical architecture featuring Meal (containers like Breakfast/Lunch) and MealItem (individual foods).
+- Feature: Added full CRUD operations (Create, Read, Update, Delete) and duplication functionality for both Meal containers and MealItem entries.
+- Feature: Implemented a dynamic "Add Meal" form that allows creating a meal container and adding multiple food items to it simultaneously.
+- UI/UX: Redesigned the dashboard to display meals as expandable/collapsible containers with toggle arrows (▶/▼) optimized for mobile touch.
+- UI/UX: Updated container styling to show total macro summaries, with individual MealItem cards visually indented underneath their respective containers.
+- Chore: Generated and applied database migrations (0004_meal_mealitem.py) and updated all related URLs, views, and forms to support the new architecture.

@@ -14,12 +14,18 @@ urlpatterns = [
     path('food/barcode/', views.add_by_barcode, name='add_by_barcode'),
     path('food/<int:pk>/edit/', views.FoodUpdateView.as_view(), name='food_update'),
     path('food/<int:pk>/delete/', views.FoodDeleteView.as_view(), name='food_delete'),
-    
-    # MealLog Routes
-    path('meal/add/', views.MealLogCreateView.as_view(), name='meallog_create'),
-    path('meal/<int:pk>/duplicate/', views.duplicate_meal, name='meallog_duplicate'),
-    path('meal/<int:pk>/edit/', views.MealLogUpdateView.as_view(), name='meallog_update'),
-    path('meal/<int:pk>/delete/', views.MealLogDeleteView.as_view(), name='meallog_delete'),
+
+    # Meal (container) Routes
+    path('meal/add/', views.meal_create, name='meal_create'),
+    path('meal/<int:pk>/edit/', views.meal_edit, name='meal_edit'),
+    path('meal/<int:pk>/delete/', views.meal_delete, name='meal_delete'),
+    path('meal/<int:pk>/duplicate/', views.meal_duplicate, name='meal_duplicate'),
+
+    # MealItem Routes
+    path('meal/<int:meal_pk>/item/add/', views.meal_item_add, name='meal_item_add'),
+    path('meal-item/<int:pk>/edit/', views.meal_item_edit, name='meal_item_edit'),
+    path('meal-item/<int:pk>/delete/', views.meal_item_delete, name='meal_item_delete'),
+    path('meal-item/<int:pk>/duplicate/', views.meal_item_duplicate, name='meal_item_duplicate'),
 
     # Profile & Password Routes
     path('settings/', views.settings_view, name='settings'),
@@ -29,5 +35,4 @@ urlpatterns = [
         template_name='registration/password_change.html',
         success_url=reverse_lazy('tracker:dashboard')
     ), name='password_change'),
-
 ]

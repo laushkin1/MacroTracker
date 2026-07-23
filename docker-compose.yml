@@ -27,6 +27,7 @@ services:
       - DB_PASS=${DB_PASS}
       - SECRET_KEY=${SECRET_KEY}
       - DEBUG=${DEBUG}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS}
 
 volumes:
   postgres_data:

@@ -1,24 +1,47 @@
 from django import forms
 from django.core.exceptions import ValidationError
 from django.utils import timezone
-from .models import Food, MealLog, UserProfile
+from .models import Food, Meal, MealItem, UserProfile
+
 
 class FoodForm(forms.ModelForm):
     class Meta:
         model = Food
         fields = ['name', 'barcode', 'calories', 'protein', 'fat', 'carbs']
         widgets = {
-            'barcode': forms.HiddenInput() 
+            'barcode': forms.HiddenInput()
         }
 
 
-class MealLogForm(forms.ModelForm):
+class MealForm(forms.ModelForm):
     class Meta:
-        model = MealLog
-        fields = ['food', 'date', 'weight_grams']
+        model = Meal
+        fields = ['name', 'date']
         widgets = {
             'date': forms.DateInput(attrs={'type': 'date'}),
-            'weight_grams': forms.NumberInput(attrs={'step': 'any', 'min': '0.01', 'placeholder': 'e.g. 150.5'})
+            'name': forms.TextInput(attrs={'placeholder': 'e.g. Breakfast, Lunch…'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['date'].widget.attrs['max'] = timezone.now().date().isoformat()
+
+    def clean_date(self):
+        selected_date = self.cleaned_data.get('date')
+        if selected_date and selected_date > timezone.now().date():
+            raise ValidationError("You cannot log meals in the future.")
+        return selected_date
+
+
+class MealItemForm(forms.ModelForm):
+    class Meta:
+        model = MealItem
+        fields = ['food', 'weight_grams']
+        widgets = {
+            'food': forms.HiddenInput(),
+            'weight_grams': forms.NumberInput(attrs={
+                'step': 'any', 'min': '0.01', 'placeholder': 'e.g. 150'
+            }),
         }
 
     def full_clean(self):
@@ -30,22 +53,12 @@ class MealLogForm(forms.ModelForm):
                 self.data = mutable_data
         super().full_clean()
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Set the max attribute dynamically to today
-        self.fields['date'].widget.attrs['max'] = timezone.now().date().isoformat()
-
-    def clean_date(self):
-        selected_date = self.cleaned_data.get('date')
-        if selected_date > timezone.now().date():
-            raise ValidationError("You cannot log meals in the future.")
-        return selected_date
-
 
 class ProfileForm(forms.ModelForm):
     class Meta:
         model = UserProfile
         fields = ['daily_calories_limit', 'daily_protein_limit', 'daily_fat_limit', 'daily_carbs_limit']
+
 
 class UsernameChangeForm(forms.Form):
     new_username = forms.CharField(max_length=150, label="New Username")

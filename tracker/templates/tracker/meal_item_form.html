@@ -1,0 +1,80 @@
+{% extends 'tracker/base.html' %}
+
+{% block title %}{% if is_edit %}Edit{% else %}Add{% endif %} Food — {{ meal.name }}{% endblock %}
+
+{% block content %}
+    <h2>{% if is_edit %}Edit{% else %}Add{% endif %} Food</h2>
+    <p style="color: var(--text-muted); margin-top: -10px; margin-bottom: 20px; text-align: center;">Meal: <strong style="color: var(--text-main);">{{ meal.name }}</strong></p>
+
+    <div class="card">
+        <form method="post">
+            {% csrf_token %}
+
+            <!-- Food search -->
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; font-weight: bold; margin-bottom: 8px;">Food:</label>
+                <div style="position: relative;">
+                    <input type="text" id="food_search" placeholder="Search food or barcode…" autocomplete="off"
+                           value="{% if is_edit %}{{ item.food.name }}{% endif %}">
+                    <div id="food_list_container" style="max-height: 200px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; display: none; background: #fff; position: absolute; width: 100%; z-index: 10; box-shadow: 0 4px 12px rgba(0,0,0,0.1);"></div>
+                </div>
+                <div style="text-align: right; margin-top: 5px;">
+                    <a href="{% url 'tracker:food_create' %}" style="font-size: 0.9em; color: var(--text-muted);">+ Add new food to database</a>
+                </div>
+                <input type="hidden" name="food_id" id="id_food" value="{% if is_edit %}{{ item.food.id }}{% endif %}" required>
+            </div>
+
+            <!-- Weight -->
+            <div style="margin-bottom: 24px;">
+                <label for="id_weight_grams" style="display: block; font-weight: bold; margin-bottom: 8px;">Weight (grams):</label>
+                <input type="number" id="id_weight_grams" name="weight_grams" step="any" min="0.01"
+                       placeholder="e.g. 150" value="{% if is_edit %}{{ item.weight_grams }}{% endif %}">
+            </div>
+
+            <button type="submit" class="btn">Save</button>
+        </form>
+    </div>
+
+    <div style="text-align: center; margin-top: 10px;">
+        <a href="javascript:history.back()">&larr; Cancel</a>
+    </div>
+
+    <script>
+    const foods = {{ foods_json|safe }};
+    const searchInput = document.getElementById('food_search');
+    const listContainer = document.getElementById('food_list_container');
+    const hiddenInput = document.getElementById('id_food');
+
+    function renderList(items) {
+        listContainer.innerHTML = '';
+        if (!items.length) { listContainer.style.display = 'none'; return; }
+        listContainer.style.display = 'block';
+        items.forEach(item => {
+            const div = document.createElement('div');
+            div.style.cssText = 'padding:12px 15px;cursor:pointer;border-bottom:1px solid #eee;';
+            div.textContent = item.name;
+            div.onclick = () => {
+                hiddenInput.value = item.id;
+                searchInput.value = item.name;
+                listContainer.style.display = 'none';
+            };
+            listContainer.appendChild(div);
+        });
+    }
+
+    searchInput.addEventListener('input', e => {
+        const q = e.target.value.toLowerCase().trim();
+        if (!q) { renderList(foods); return; }
+        const sw = foods.filter(f => f.name.toLowerCase().startsWith(q) || (f.barcode && f.barcode.startsWith(q)));
+        const cn = foods.filter(f => !sw.includes(f) && (f.name.toLowerCase().includes(q) || (f.barcode && f.barcode.includes(q))));
+        renderList([...sw, ...cn]);
+    });
+
+    searchInput.addEventListener('focus', () => searchInput.dispatchEvent(new Event('input')));
+    document.addEventListener('click', e => {
+        if (e.target !== searchInput && !listContainer.contains(e.target)) {
+            listContainer.style.display = 'none';
+        }
+    });
+    </script>
+{% endblock %}

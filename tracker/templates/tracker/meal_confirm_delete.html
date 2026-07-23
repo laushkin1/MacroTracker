@@ -1,0 +1,19 @@
+{% extends 'tracker/base.html' %}
+
+{% block title %}Delete Meal{% endblock %}
+
+{% block content %}
+    <h2>Delete Meal</h2>
+
+    <div class="card" style="text-align: center;">
+        <p style="color: var(--text-main); margin-bottom: 5px;">Are you sure you want to delete</p>
+        <p style="font-weight: bold; font-size: 1.1em; color: var(--text-main); margin-bottom: 5px;">{{ meal.name }}</p>
+        <p style="color: var(--text-muted); margin-bottom: 20px;">{{ meal.date }} · {{ meal.items.count }} item{{ meal.items.count|pluralize }}</p>
+
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">Yes, Delete</button>
+        </form>
+        <a href="javascript:history.back()" style="display: block; margin-top: 15px; color: var(--text-muted);">&larr; Cancel</a>
+    </div>
+{% endblock %}
