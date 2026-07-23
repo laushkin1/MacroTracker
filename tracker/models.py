@@ -15,7 +15,7 @@ class UserProfile(models.Model):
 
 
 class Food(models.Model):
-    name = models.CharField(max_length=255, unique=True, verbose_name="Product name")
+    name = models.CharField(max_length=255, verbose_name="Product name")
     # Field for parsing from OpenFoodFacts
     barcode = models.CharField(max_length=50, blank=True, null=True, verbose_name="Barcode (for API)")
 
@@ -23,6 +23,19 @@ class Food(models.Model):
     protein = models.DecimalField(max_digits=5, decimal_places=1, default=0, verbose_name="Protein (per 100g)")
     fat = models.DecimalField(max_digits=5, decimal_places=1, default=0, verbose_name="Fat (per 100g)")
     carbs = models.DecimalField(max_digits=5, decimal_places=1, default=0, verbose_name="Carb (per 100g)")
+
+    owner = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='food',
+        null=True,
+        blank=True,
+        help_text='User who owns the record'
+    )
+
+    class Meta:
+        unique_together = ('owner', 'name')
+        ordering = ['-id']
 
     def __str__(self):
         return self.name

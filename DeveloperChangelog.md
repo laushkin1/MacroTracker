@@ -33,3 +33,5 @@
 - UI/UX: Redesigned the dashboard to display meals as expandable/collapsible containers with toggle arrows (▶/▼) optimized for mobile touch.
 - UI/UX: Updated container styling to show total macro summaries, with individual MealItem cards visually indented underneath their respective containers.
 - Chore: Generated and applied database migrations (0004_meal_mealitem.py) and updated all related URLs, views, and forms to support the new architecture.
+- Feature: Implemented user-specific food databases by adding an owner (ForeignKey) relationship to the Food model.
+- Security: Filtered all food-related queries (including the food list and JS search popups) to restrict users to only seeing and managing their own food items.

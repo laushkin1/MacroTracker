@@ -205,7 +205,11 @@ class FoodListView(LoginRequiredMixin, ListView):
     context_object_name = 'foods'
 
     def get_queryset(self):
-        qs = super().get_queryset()
+        user = self.request.user
+        if user.is_superuser:
+            qs = Food.objects.all()
+        else:
+            qs = Food.objects.filter(owner=user)
         sort = self.request.GET.get('sort', 'newest')
 
         if sort == 'name_asc':
@@ -241,6 +245,10 @@ class FoodCreateView(LoginRequiredMixin, CreateView):
         context['origin_date'] = self.request.GET.get('date', '')
         return context
 
+    def form_valid(self, form):
+        form.instance.owner = self.request.user
+        return super().form_valid(form)
+
     def get_success_url(self):
         date_param = self.request.GET.get('date')
         base_url = reverse_lazy('tracker:food_list')
@@ -251,6 +259,12 @@ class FoodUpdateView(LoginRequiredMixin, UpdateView):
     model = Food
     form_class = FoodForm
     template_name = 'tracker/food_form.html'
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_superuser:
+            return Food.objects.all()
+        return Food.objects.filter(owner=user)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -267,6 +281,12 @@ class FoodDeleteView(LoginRequiredMixin, DeleteView):
     model = Food
     template_name = 'tracker/food_confirm_delete.html'
 
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_superuser:
+            return Food.objects.all()
+        return Food.objects.filter(owner=user)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['origin_date'] = self.request.GET.get('date', '')
@@ -279,16 +299,20 @@ class FoodDeleteView(LoginRequiredMixin, DeleteView):
 
 
 # --- MEAL CRUD ---
-def _get_foods_json():
-    """Return all foods as JSON for JS autocomplete."""
-    return json.dumps(list(Food.objects.values('id', 'name', 'barcode')))
+def _get_foods_json(user):
+    """Return foods for the current user as JSON for JS autocomplete."""
+    if user.is_superuser:
+        qs = Food.objects.all()
+    else:
+        qs = Food.objects.filter(owner=user)
+    return json.dumps(list(qs.values('id', 'name', 'barcode')))
 
 
 @login_required
 def meal_create(request):
     """Create a Meal container with one or more food items."""
     date_param = request.GET.get('date', '')
-    foods_json = _get_foods_json()
+    foods_json = _get_foods_json(request.user)
 
     if request.method == 'POST':
         form = MealForm(request.POST)
@@ -333,7 +357,7 @@ def meal_create(request):
 def meal_edit(request, pk):
     """Edit a Meal container (name, date) and its food items."""
     meal = get_object_or_404(Meal, pk=pk, user=request.user)
-    foods_json = _get_foods_json()
+    foods_json = _get_foods_json(request.user)
 
     if request.method == 'POST':
         form = MealForm(request.POST, instance=meal)
@@ -413,7 +437,7 @@ def meal_duplicate(request, pk):
 def meal_item_add(request, meal_pk):
     """Add a food item to an existing Meal container."""
     meal = get_object_or_404(Meal, pk=meal_pk, user=request.user)
-    foods_json = _get_foods_json()
+    foods_json = _get_foods_json(request.user)
 
     if request.method == 'POST':
         food_id = request.POST.get('food_id')
@@ -440,7 +464,7 @@ def meal_item_edit(request, pk):
     """Edit a food item inside a Meal container."""
     item = get_object_or_404(MealItem, pk=pk, meal__user=request.user)
     meal = item.meal
-    foods_json = _get_foods_json()
+    foods_json = _get_foods_json(request.user)
 
     if request.method == 'POST':
         food_id = request.POST.get('food_id')
@@ -527,7 +551,11 @@ def add_by_barcode(request):
     if request.method == 'POST':
         barcode = request.POST.get('barcode').strip()
 
-        existing_food = Food.objects.filter(barcode=barcode).first()
+        # Check barcode only within the current user's foods
+        if request.user.is_superuser:
+            existing_food = Food.objects.filter(barcode=barcode).first()
+        else:
+            existing_food = Food.objects.filter(barcode=barcode, owner=request.user).first()
         if existing_food:
             messages.error(request, f"Product '{existing_food.name}' is already in your database.")
             return redirect(redirect_url)
