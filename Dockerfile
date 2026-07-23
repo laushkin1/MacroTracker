@@ -1,16 +1,29 @@
+ARG PYTHON_VERSION=3.13-slim
 
-FROM python:3.13-slim
+FROM python:${PYTHON_VERSION}
 
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
 
-WORKDIR /app
+# install psycopg2 dependencies.
+RUN apt-get update && apt-get install -y \
+    libpq-dev \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN mkdir -p /code
+
+WORKDIR /code
 
 RUN pip install poetry
+COPY pyproject.toml poetry.lock /code/
+RUN poetry config virtualenvs.create false
+RUN poetry install --only main --no-root --no-interaction
+COPY . /code
 
-COPY pyproject.toml poetry.lock /app/
+ENV SECRET_KEY "vhUMDuTQnS2H51f2Bso6J6d6s553Dc7ea2a208CO8W49p69vPh"
+RUN python manage.py collectstatic --noinput
 
-RUN poetry config virtualenvs.create false \
-    && poetry install --no-interaction --no-ansi
+EXPOSE 8000
 
-COPY . /app/
+CMD ["gunicorn","--bind",":8000","--workers","2","core.wsgi"]

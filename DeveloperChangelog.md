@@ -35,3 +35,6 @@
 - Chore: Generated and applied database migrations (0004_meal_mealitem.py) and updated all related URLs, views, and forms to support the new architecture.
 - Feature: Implemented user-specific food databases by adding an owner (ForeignKey) relationship to the Food model.
 - Security: Filtered all food-related queries (including the food list and JS search popups) to restrict users to only seeing and managing their own food items.
+- Deployment: Integrated Fly.io for cloud hosting, connecting the production application to a persistent PostgreSQL database hosted on Neon.tech.
+- Dependencies: Added gunicorn (WSGI HTTP server), whitenoise (static files management), and dj-database-url (database configuration via environment variables) for production readiness.
+- Refactor: Updated settings.py to dynamically handle environment-based DEBUG, ALLOWED_HOSTS, and external DATABASE_URL parsing.
