@@ -1,6 +1,7 @@
 # Macro Tracker Dashboard
 This is a personal web application built with Django to track daily macronutrients (Calories, Protein, Fat, Carbs). It features a smart search system, color-coded limit tracking, and integration with the OpenFoodFacts API.
 
+#### Temporary website - [MacroTracker](https://macrotracker.fly.dev)
 
 ## How to use?
 1. Register and log in to the application.
