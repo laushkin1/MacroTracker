@@ -50,35 +50,101 @@
     let rowIndex = 0;
     const foodRowsContainer = document.getElementById('food-rows');
 
-    // Food search dropdown logic (reused per row)
     function setupSearch(row, index) {
         const searchInput = row.querySelector('.food-search-input');
         const listContainer = row.querySelector('.food-list-container');
         const hiddenId = row.querySelector('.food-hidden-id');
+        const offToggle = row.querySelector('.off-search-toggle');
+        let searchTimeout;
 
         function renderList(items) {
             listContainer.innerHTML = '';
             if (!items.length) { listContainer.style.display = 'none'; return; }
             listContainer.style.display = 'block';
+            
             items.forEach(item => {
                 const div = document.createElement('div');
                 div.className = 'food-search-item';
-                div.textContent = item.name;
-                div.onclick = () => {
-                    hiddenId.value = item.id;
-                    searchInput.value = item.name;
-                    listContainer.style.display = 'none';
+                // Визуально выделяем продукты из API
+                div.innerHTML = item.isLocal ? item.name : `<b>${item.name}</b> <small style="color:gray;">(OpenFoodFacts)</small>`;
+                
+                div.onclick = async () => {
+                    if (item.isLocal) {
+                        hiddenId.value = item.id;
+                        searchInput.value = item.name;
+                        listContainer.style.display = 'none';
+                    } else {
+                        searchInput.value = "Saving to database...";
+                        listContainer.style.display = 'none';
+                        
+                        try {
+                            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                            const response = await fetch("{% url 'tracker:save_off_food' %}", {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRFToken': csrfToken
+                                },
+                                body: JSON.stringify(item)
+                            });
+                            
+                            const data = await response.json();
+                            if (data.id) {
+                                hiddenId.value = data.id;
+                                searchInput.value = item.name;
+                                foods.push({ id: data.id, name: item.name, isLocal: true });
+                            } else {
+                                alert("Failed to save food.");
+                                searchInput.value = "";
+                            }
+                        } catch (err) {
+                            console.error("Error saving food:", err);
+                            alert("Network error.");
+                            searchInput.value = "";
+                        }
+                    }
                 };
                 listContainer.appendChild(div);
             });
         }
 
         searchInput.addEventListener('input', e => {
+            clearTimeout(searchTimeout);
             const q = e.target.value.toLowerCase().trim();
-            if (!q) { renderList(foods); return; }
+            const searchOFF = offToggle.checked;
+
+            if (!q) { renderList(foods.map(f => ({...f, isLocal: true}))); return; }
+
             const sw = foods.filter(f => f.name.toLowerCase().startsWith(q) || (f.barcode && f.barcode.startsWith(q)));
             const cn = foods.filter(f => !sw.includes(f) && (f.name.toLowerCase().includes(q) || (f.barcode && f.barcode.includes(q))));
-            renderList([...sw, ...cn]);
+            let results = [...sw, ...cn].map(f => ({ ...f, isLocal: true }));
+
+            renderList(results); 
+
+            if (searchOFF && q.length >= 3) {
+                searchTimeout = setTimeout(() => {
+                    fetch(`https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=10`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (!data.products) return;
+                        
+                        const offResults = data.products
+                            .filter(p => p.product_name)
+                            .map(p => ({
+                                name: p.product_name + (p.brands ? ` (${p.brands})` : ''),
+                                barcode: p.code,
+                                kcal: p.nutriments?.['energy-kcal_100g'] || 0,
+                                protein: p.nutriments?.['proteins_100g'] || 0,
+                                fat: p.nutriments?.['fat_100g'] || 0,
+                                carbs: p.nutriments?.['carbohydrates_100g'] || 0,
+                                isLocal: false
+                            }));
+                        
+                        renderList([...results, ...offResults]);
+                    })
+                    .catch(err => console.error("OFF API error:", err));
+                }, 500);
+            }
         });
 
         searchInput.addEventListener('focus', () => searchInput.dispatchEvent(new Event('input')));
@@ -98,9 +164,17 @@
             <div class="food-row-inner">
                 <div style="position: relative; margin-bottom: 10px;">
                     <input type="text" class="food-search-input" placeholder="Search food…" autocomplete="off" value="${preFood ? preFood.name : ''}">
+                    
+                    <label style="font-size: 0.85em; margin-top: 5px; display: flex; align-items: center; justify-content: flex-start; gap: 8px; color: var(--text-muted); cursor: pointer; text-align: left;">
+                        <input type="checkbox" class="off-search-toggle" style="width: auto; margin: 0; padding: 0;"> 
+                        Search in OpenFoodFacts
+                    </label>
+                    
                     <div class="food-list-container"></div>
                 </div>
+                
                 <input type="hidden" class="food-hidden-id" name="food_id_${index}" value="${preFood ? preFood.id : ''}">
+                
                 <div style="display: flex; gap: 10px; align-items: center;">
                     <input type="number" name="weight_${index}" step="any" min="0.01" placeholder="Weight (g)" value="${preWeight !== undefined ? preWeight : ''}" style="flex: 1; margin-bottom: 0;">
                     <button type="button" class="remove-row-btn" aria-label="Remove food row" onclick="this.closest('.food-row-card').remove()">
@@ -118,11 +192,12 @@
 
     document.getElementById('add-food-btn').addEventListener('click', () => addFoodRow());
 
-    // Pre-populate existing items when editing
     if (existingItems.length > 0) {
         existingItems.forEach(item => {
             addFoodRow({ id: item.food_id, name: item['food__name'] }, item.weight_grams);
         });
+    } else {
+        addFoodRow(); 
     }
     </script>
 {% endblock %}

@@ -38,3 +38,10 @@
 - Deployment: Integrated Fly.io for cloud hosting, connecting the production application to a persistent PostgreSQL database hosted on Neon.tech.
 - Dependencies: Added gunicorn (WSGI HTTP server), whitenoise (static files management), and dj-database-url (database configuration via environment variables) for production readiness.
 - Refactor: Updated settings.py to dynamically handle environment-based DEBUG, ALLOWED_HOSTS, and external DATABASE_URL parsing.
+
+### 2026-07-26
+- Feature: Automatically initialize 6 default meal containers (Breakfast, Morning Snack, Lunch, Afternoon Snack, Dinner, Second Dinner) for each day to eliminate empty-state friction for new users.
+- Refactor: Reworked the + Add Food workflow into a unified modal/form experience allowing users to select any meal container on that date, search for food, and specify weight in a single step.
+- Feature: Integrated OpenFoodFacts API search with an opt-in toggle directly into food selection views, enabling users to fetch and auto-save external products into their local database on the fly.
+- UI/UX: Restructured the dashboard by moving the custom meal creation action to a dedicated + Add Meal button and introducing a standalone Calendar button for improved navigation clarity.
+- UI/UX: Enhanced the food item edit view to support transferring items between different meal containers within the same date.

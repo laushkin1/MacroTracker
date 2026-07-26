@@ -137,6 +137,11 @@ a:hover { text-decoration: underline; }
     gap: 8px;
 }
 
+.date-nav a.nav-date:hover {
+    text-decoration: none;
+    cursor: default;
+}
+
 /* ============================================================
    MEAL CONTAINERS (new structure)
    ============================================================ */

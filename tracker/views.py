@@ -2,6 +2,8 @@ import calendar
 from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse, reverse_lazy
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
@@ -78,10 +80,32 @@ def daily_dashboard(request):
     prev_date = current_date - timedelta(days=1)
     next_date = current_date + timedelta(days=1) if current_date < today else None
 
+    DEFAULT_MEALS = [
+        'Breakfast', 'Morning Snack', 'Lunch', 
+        'Afternoon Snack', 'Dinner', 'Second Dinner'
+    ]
+
+    existing_names = set(Meal.objects.filter(
+        user=request.user, date=current_date
+    ).values_list('name', flat=True))
+
+    # Создаем недостающие приемы пищи
+    for name in DEFAULT_MEALS:
+        if name not in existing_names:
+            Meal.objects.create(
+                user=request.user, 
+                date=current_date, 
+                name=name
+            )
+    # -----------------------------------------------------
+
     # Fetch all Meals for the day with prefetched items and food data
-    daily_meals = Meal.objects.filter(
+    daily_meals_qs = Meal.objects.filter(
         user=request.user, date=current_date
     ).prefetch_related('items__food')
+
+    daily_meals = list(daily_meals_qs)
+    daily_meals.sort(key=lambda m: DEFAULT_MEALS.index(m.name) if m.name in DEFAULT_MEALS else 999)
 
     # Total КБЖУ = sum across all Meals, each Meal = sum of its MealItems
     consumed_calories = sum(meal.total_calories for meal in daily_meals)
@@ -434,58 +458,111 @@ def meal_duplicate(request, pk):
 
 # --- MEAL ITEM CRUD ---
 @login_required
-def meal_item_add(request, meal_pk):
-    """Add a food item to an existing Meal container."""
-    meal = get_object_or_404(Meal, pk=meal_pk, user=request.user)
+def meal_item_add(request, meal_pk=None):
+    """Add a food item to a Meal container (with or without pre-selected meal)."""
+    meal = None
+    meals = []
+    
+    if meal_pk:
+        meal = get_object_or_404(Meal, pk=meal_pk, user=request.user)
+        current_date = meal.date
+    else:
+        date_str = request.GET.get('date')
+        if date_str:
+            try:
+                current_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            except ValueError:
+                current_date = timezone.now().date()
+        else:
+            current_date = timezone.now().date()
+        
+    meals_qs = Meal.objects.filter(user=request.user, date=current_date)
+    DEFAULT_MEALS = [
+        'Breakfast', 'Morning Snack', 'Lunch', 
+        'Afternoon Snack', 'Dinner', 'Second Dinner'
+    ]
+    meals = list(meals_qs)
+    meals.sort(key=lambda m: DEFAULT_MEALS.index(m.name) if m.name in DEFAULT_MEALS else 999)
+    
+    selected_meal_id = meal.pk if meal else None
+
     foods_json = _get_foods_json(request.user)
 
     if request.method == 'POST':
+        form_meal_id = request.POST.get('meal_id')
+        target_meal = get_object_or_404(Meal, pk=form_meal_id, user=request.user)
+
         food_id = request.POST.get('food_id')
         weight = request.POST.get('weight_grams')
+        
         if food_id and weight:
             try:
                 food_obj = Food.objects.get(pk=food_id)
                 weight_val = str(weight).replace(',', '.')
-                MealItem.objects.create(meal=meal, food=food_obj, weight_grams=weight_val)
+                MealItem.objects.create(meal=target_meal, food=food_obj, weight_grams=weight_val)
             except (Food.DoesNotExist, ValueError):
                 pass
-        date_iso = meal.date.isoformat()
+                
+        date_iso = target_meal.date.isoformat()
         return redirect(f"{reverse('tracker:dashboard')}?date={date_iso}")
 
     return render(request, 'tracker/meal_item_form.html', {
         'meal': meal,
+        'meals': meals,
+        'selected_meal_id': selected_meal_id,
         'foods_json': foods_json,
         'is_edit': False,
+        'current_date': current_date,
     })
 
 
 @login_required
 def meal_item_edit(request, pk):
-    """Edit a food item inside a Meal container."""
+    """Edit a food item inside a Meal container (with meal selection)."""
     item = get_object_or_404(MealItem, pk=pk, meal__user=request.user)
-    meal = item.meal
+    current_meal = item.meal
+    current_date = current_meal.date
+
+    meals_qs = Meal.objects.filter(user=request.user, date=current_date)
+    DEFAULT_MEALS = [
+        'Breakfast', 'Morning Snack', 'Lunch', 
+        'Afternoon Snack', 'Dinner', 'Second Dinner'
+    ]
+    meals = list(meals_qs)
+    meals.sort(key=lambda m: DEFAULT_MEALS.index(m.name) if m.name in DEFAULT_MEALS else 999)
+
     foods_json = _get_foods_json(request.user)
 
     if request.method == 'POST':
+        form_meal_id = request.POST.get('meal_id')
+        target_meal = get_object_or_404(Meal, pk=form_meal_id, user=request.user)
+
         food_id = request.POST.get('food_id')
         weight = request.POST.get('weight_grams')
+        
         if food_id and weight:
             try:
                 food_obj = Food.objects.get(pk=food_id)
                 weight_val = str(weight).replace(',', '.')
+                
+                item.meal = target_meal
                 item.food = food_obj
                 item.weight_grams = weight_val
                 item.save()
             except (Food.DoesNotExist, ValueError):
                 pass
-        date_iso = meal.date.isoformat()
+                
+        date_iso = target_meal.date.isoformat()
         return redirect(f"{reverse('tracker:dashboard')}?date={date_iso}")
 
     return render(request, 'tracker/meal_item_form.html', {
-        'meal': meal,
+        'meal': current_meal,
+        'meals': meals,
+        'selected_meal_id': current_meal.pk,
         'item': item,
         'foods_json': foods_json,
         'is_edit': True,
+        'current_date': current_date,
     })
 
 
@@ -596,3 +673,43 @@ def add_by_barcode(request):
             return redirect(redirect_url)
 
     return render(request, 'tracker/barcode_form.html', {'origin_date': origin_date})
+
+
+@login_required
+@require_POST
+def save_off_food(request):
+    try:
+        data = json.loads(request.body)
+        barcode = data.get('barcode')
+        
+        if not barcode:
+            return JsonResponse({'error': 'No barcode provided'}, status=400)
+
+        def safe_float(val):
+            try:
+                return float(val) if val else 0.0
+            except (ValueError, TypeError):
+                return 0.0
+
+        if request.user.is_superuser:
+            existing_food = Food.objects.filter(barcode=barcode).first()
+        else:
+            existing_food = Food.objects.filter(barcode=barcode, owner=request.user).first()
+
+        if existing_food:
+            return JsonResponse({'id': existing_food.id, 'name': existing_food.name})
+
+        new_food = Food.objects.create(
+            owner=request.user,
+            barcode=barcode,
+            name=data.get('name', 'Unknown API Food'),
+            calories=safe_float(data.get('kcal')),
+            protein=safe_float(data.get('protein')),
+            fat=safe_float(data.get('fat')),
+            carbs=safe_float(data.get('carbs'))
+        )
+        
+        return JsonResponse({'id': new_food.id, 'name': new_food.name})
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)

@@ -35,7 +35,7 @@
 
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
         <h3 style="margin: 0;">Meals</h3>
-        <a href="{% url 'tracker:meal_create' %}?date={{ current_date|date:'Y-m-d' }}" class="btn btn-outline" style="width: auto; padding: 8px 15px; margin: 0;">+ Add</a>
+        <a href="{% url 'tracker:meal_item_add' %}?date={{ current_date|date:'Y-m-d' }}" class="btn btn-outline" style="width: auto; padding: 8px 15px; margin: 0;">+ Add Food</a>
     </div>
 
     {% if meals %}
@@ -121,15 +121,17 @@
     {% endif %}
 
     <div style="margin-top: 30px; display: flex; flex-direction: column; gap: 10px;">
+        <a href="{% url 'tracker:meal_create' %}?date={{ current_date|date:'Y-m-d' }}" class="btn btn-outline">🍽️ Add Meal</a>
         <a href="{% url 'tracker:food_list' %}?date={{ current_date|date:'Y-m-d' }}" class="btn btn-outline">🥗 Manage Food Database</a>
         <a href="{% url 'tracker:settings' %}" class="btn btn-outline">⚙️ Settings</a>
+        <a href="{% url 'tracker:monthly_dashboard' %}" class="btn btn-outline">📅 Calendar</a>
     </div>
 
     <div class="date-nav">
         <a href="?date={{ prev_date|date:'Y-m-d' }}" class="nav-arrow">&lt;</a>
 
-        <a href="{% url 'tracker:monthly_dashboard' %}?date={{ current_date|date:'Y-m-d' }}" class="nav-date">
-            📅 {{ current_date|date:"M d, Y" }}
+        <a class="nav-date">
+            {{ current_date|date:"M d, Y" }}
         </a>
 
         {% if next_date %}

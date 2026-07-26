@@ -12,6 +12,7 @@ urlpatterns = [
     path('food/', views.FoodListView.as_view(), name='food_list'),
     path('food/add/', views.FoodCreateView.as_view(), name='food_create'),
     path('food/barcode/', views.add_by_barcode, name='add_by_barcode'),
+    path('food/api/save-off/', views.save_off_food, name='save_off_food'),
     path('food/<int:pk>/edit/', views.FoodUpdateView.as_view(), name='food_update'),
     path('food/<int:pk>/delete/', views.FoodDeleteView.as_view(), name='food_delete'),
 
@@ -23,6 +24,7 @@ urlpatterns = [
 
     # MealItem Routes
     path('meal/<int:meal_pk>/item/add/', views.meal_item_add, name='meal_item_add'),
+    path('meal-item/add/', views.meal_item_add, name='meal_item_add'),
     path('meal-item/<int:pk>/edit/', views.meal_item_edit, name='meal_item_edit'),
     path('meal-item/<int:pk>/delete/', views.meal_item_delete, name='meal_item_delete'),
     path('meal-item/<int:pk>/duplicate/', views.meal_item_duplicate, name='meal_item_duplicate'),
