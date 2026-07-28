@@ -72,14 +72,24 @@
 
                 const offResults = data.products
                     .filter(p => p.product_name)
-                    .map(p => ({
-                        name: p.product_name + (p.brands ? ` (${p.brands})` : ''),
-                        barcode: p.code || '',
-                        kcal: p.nutriments?.['energy-kcal_100g'] || 0,
-                        protein: p.nutriments?.['proteins_100g'] || 0,
-                        fat: p.nutriments?.['fat_100g'] || 0,
-                        carbs: p.nutriments?.['carbohydrates_100g'] || 0
-                    }));
+                    .map(p => {
+                        let customPortions = {};
+                        if (p.serving_quantity) {
+                            const qty = parseFloat(p.serving_quantity);
+                            const name = p.serving_size || `Portion (${qty}g/ml)`;
+                            customPortions[name] = qty;
+                        }
+
+                        return {
+                            name: p.product_name + (p.brands ? ` (${p.brands})` : ''),
+                            barcode: p.code || '',
+                            kcal: p.nutriments?.['energy-kcal_100g'] || 0,
+                            protein: p.nutriments?.['proteins_100g'] || 0,
+                            fat: p.nutriments?.['fat_100g'] || 0,
+                            carbs: p.nutriments?.['carbohydrates_100g'] || 0,
+                            portions: customPortions
+                        };
+                    });
                 
                 if (offResults.length === 0) {
                     offNoResults.style.display = 'block';

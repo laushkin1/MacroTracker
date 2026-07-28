@@ -7,10 +7,18 @@ from .models import Food, Meal, MealItem, UserProfile
 class FoodForm(forms.ModelForm):
     class Meta:
         model = Food
-        fields = ['name', 'barcode', 'calories', 'protein', 'fat', 'carbs']
-        widgets = {
-            'barcode': forms.HiddenInput()
+        fields = ['name', 'barcode', 'calories', 'protein', 'fat', 'carbs', 'portions']
+        labels = {
+            'barcode': '',
         }
+        widgets = {
+            'name': forms.TextInput(attrs={'placeholder': 'e.g. Chicken Breast', 'autocomplete': 'off'}),
+            'barcode': forms.HiddenInput(),
+            'carbs': forms.NumberInput(attrs={'placeholder': '0', 'step': 'any', 'min': '0'}),
+        }
+
+        def clean_carbs(self):
+            return self.cleaned_data.get('carbs') or 0.0
 
 
 class MealItemForm(forms.ModelForm):

@@ -20,14 +20,86 @@
     {% endif %}
 
     <div class="card">
-        <form method="post">
+        <form method="post" id="custom_food_form">
             {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit" class="btn" style="margin-top: 10px;">Save Food</button>
+            
+            {% for field in form %}
+                {% if field.name == 'portions' %}
+                    <div style="display: none;">{{ field }}</div>
+                {% else %}
+                    <div style="margin-bottom: 15px; text-align: left;">
+                        <label style="font-weight: bold; margin-bottom: 5px; display: block;">{{ field.label }}</label>
+                        {{ field }}
+                    </div>
+                {% endif %}
+            {% endfor %}
+            
+            <hr style="border: 0; border-top: 1px solid var(--border); margin: 25px 0;">
+
+            <h3 style="text-align: left; font-size: 1.1em; margin-bottom: 10px;">Custom Portions</h3>
+            <div id="portions_container" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
+            </div>
+            
+            <button type="button" class="btn btn-outline" id="add_portion_btn" style="padding: 8px; font-size: 0.9em; margin-bottom: 20px;">
+                + Add Custom Portion
+            </button>
+
+            <button type="submit" class="btn">Save Food</button>
         </form>
     </div>
 
     <div style="text-align: center;">
         <a href="{% url 'tracker:food_list' %}{% if origin_date %}?date={{ origin_date }}{% endif %}">&larr; Cancel</a>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('custom_food_form');
+            const hiddenPortionsInput = document.querySelector('textarea[name="portions"], input[name="portions"]');
+            const container = document.getElementById('portions_container');
+            const addBtn = document.getElementById('add_portion_btn');
+
+            let currentPortions = {};
+            try {
+                if (hiddenPortionsInput.value) {
+                    currentPortions = JSON.parse(hiddenPortionsInput.value);
+                }
+            } catch (e) { console.error("Error parsing JSON:", e); }
+
+            function createPortionRow(name = "", weight = "") {
+                const row = document.createElement('div');
+                row.style.cssText = "display: flex; gap: 10px; align-items: center;";
+                
+                row.innerHTML = `
+                    <input type="text" class="p-name" placeholder="Name (e.g. Medium)" value="${name}" style="flex: 2; margin: 0; padding: 10px;">
+                    <input type="number" class="p-weight" placeholder="Weight (g)" value="${weight}" step="any" min="0.1" style="flex: 1; margin: 0; padding: 10px;">
+                    <button type="button" class="remove-btn" style="background: none; border: none; color: var(--danger); cursor: pointer; padding: 5px;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                `;
+                
+                row.querySelector('.remove-btn').onclick = () => row.remove();
+                container.appendChild(row);
+            }
+
+            for (const [name, weight] of Object.entries(currentPortions)) {
+                createPortionRow(name, weight);
+            }
+
+            addBtn.onclick = () => createPortionRow();
+
+            form.addEventListener('submit', (e) => {
+                const newPortions = {};
+                const rows = container.querySelectorAll('div');
+                rows.forEach(row => {
+                    const n = row.querySelector('.p-name').value.trim();
+                    const w = row.querySelector('.p-weight').value;
+                    if (n && w) {
+                        newPortions[n] = parseFloat(w);
+                    }
+                });
+                hiddenPortionsInput.value = JSON.stringify(newPortions);
+            });
+        });
+    </script>
 {% endblock %}

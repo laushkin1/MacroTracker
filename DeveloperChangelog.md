@@ -51,3 +51,4 @@
 - UI/UX: Streamlined the meal container architecture by removing custom meal creation entirely (deleted the "+ Add Meal" button, meal dropdown menus, and associated confirmation/form templates), locking the daily structure permanently to the 6 default meal slots.
 - Bugfix: Fixed form validation handling when adding food items to meals, preventing accidental redirection and data loss if the weight field is left empty or invalid.
 - Feature: Enhanced the OpenFoodFacts integration to display full macro nutrients (calories, protein, fat, and carbs per 100g) directly within search results and selection views.
+- Feature: Added multi-unit measurement support for food items, allowing users to log consumption using custom units alongside standard grams and milliliters

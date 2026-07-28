@@ -89,7 +89,6 @@ def daily_dashboard(request):
         user=request.user, date=current_date
     ).values_list('name', flat=True))
 
-    # Создаем недостающие приемы пищи
     for name in DEFAULT_MEALS:
         if name not in existing_names:
             Meal.objects.create(
@@ -97,7 +96,6 @@ def daily_dashboard(request):
                 date=current_date, 
                 name=name
             )
-    # -----------------------------------------------------
 
     # Fetch all Meals for the day with prefetched items and food data
     daily_meals_qs = Meal.objects.filter(
@@ -329,7 +327,21 @@ def _get_foods_json(user):
         qs = Food.objects.all()
     else:
         qs = Food.objects.filter(owner=user)
-    return json.dumps(list(qs.values('id', 'name', 'barcode')))
+
+    food_list = []
+    for f in qs:
+        food_list.append({
+            'id': f.id,
+            'name': f.name,
+            'barcode': f.barcode,
+            'kcal': float(f.calories),
+            'protein': float(f.protein),
+            'fat': float(f.fat),
+            'carbs': float(f.carbs),
+            'portions': f.portions,
+        })
+        
+    return json.dumps(food_list)
 
 
 # --- MEAL ITEM CRUD ---
@@ -367,29 +379,48 @@ def meal_item_add(request, meal_pk=None):
         target_meal = get_object_or_404(Meal, pk=form_meal_id, user=request.user)
 
         food_id = request.POST.get('food_id')
-        weight = request.POST.get('weight_grams')
         off_name = request.POST.get('off_name')
         
-        if weight and (food_id or off_name):
+        quantity_str = request.POST.get('quantity')
+        multiplier_str = request.POST.get('portion_multiplier')
+        
+        if quantity_str and multiplier_str and (food_id or off_name):
             try:
+                quantity = float(str(quantity_str).replace(',', '.'))
+                multiplier = float(str(multiplier_str).replace(',', '.'))
+                final_weight = quantity * multiplier
+                
                 food_obj = None
                 
                 if food_id:
                     food_obj = Food.objects.get(pk=food_id)
                 elif off_name:
+                    off_portions_raw = request.POST.get('off_portions', '{}')
+                    try:
+                        portions_dict = json.loads(off_portions_raw)
+                    except:
+                        portions_dict = {}
+
+                    def parse_float(val):
+                        if not val:
+                            return 0.0
+                        return float(str(val).replace(',', '.'))
+
                     food_obj = Food.objects.create(
                         name=off_name,
                         barcode=request.POST.get('off_barcode', ''),
-                        calories=float(request.POST.get('off_kcal') or 0),
-                        protein=float(request.POST.get('off_protein') or 0),
-                        fat=float(request.POST.get('off_fat') or 0),
-                        carbs=float(request.POST.get('off_carbs') or 0)
+                        calories=parse_float(request.POST.get('off_kcal')),
+                        protein=parse_float(request.POST.get('off_protein')),
+                        fat=parse_float(request.POST.get('off_fat')),
+                        carbs=parse_float(request.POST.get('off_carbs')),
+                        portions=portions_dict,
+                        owner=request.user
                     )
                 
                 if food_obj:
-                    weight_val = str(weight).replace(',', '.')
-                    MealItem.objects.create(meal=target_meal, food=food_obj, weight_grams=weight_val)
-            except (Food.DoesNotExist, ValueError):
+                    MealItem.objects.create(meal=target_meal, food=food_obj, weight_grams=final_weight)
+            except Exception as e:
+                print(f"ERROR ADDING MEAL ITEM: {e}")
                 pass
                 
         date_iso = target_meal.date.isoformat()
@@ -427,32 +458,51 @@ def meal_item_edit(request, pk):
         target_meal = get_object_or_404(Meal, pk=form_meal_id, user=request.user)
 
         food_id = request.POST.get('food_id')
-        weight = request.POST.get('weight_grams')
         off_name = request.POST.get('off_name')
         
-        if weight and (food_id or off_name):
+        quantity_str = request.POST.get('quantity')
+        multiplier_str = request.POST.get('portion_multiplier')
+        
+        if quantity_str and multiplier_str and (food_id or off_name):
             try:
+                quantity = float(str(quantity_str).replace(',', '.'))
+                multiplier = float(str(multiplier_str).replace(',', '.'))
+                final_weight = quantity * multiplier
+                
                 food_obj = None
                 
                 if food_id:
                     food_obj = Food.objects.get(pk=food_id)
                 elif off_name:
+                    off_portions_raw = request.POST.get('off_portions', '{}')
+                    try:
+                        portions_dict = json.loads(off_portions_raw)
+                    except:
+                        portions_dict = {}
+
+                    def parse_float(val):
+                        if not val:
+                            return 0.0
+                        return float(str(val).replace(',', '.'))
+
                     food_obj = Food.objects.create(
                         name=off_name,
                         barcode=request.POST.get('off_barcode', ''),
-                        calories=float(request.POST.get('off_kcal') or 0),
-                        protein=float(request.POST.get('off_protein') or 0),
-                        fat=float(request.POST.get('off_fat') or 0),
-                        carbs=float(request.POST.get('off_carbs') or 0)
+                        calories=parse_float(request.POST.get('off_kcal')),
+                        protein=parse_float(request.POST.get('off_protein')),
+                        fat=parse_float(request.POST.get('off_fat')),
+                        carbs=parse_float(request.POST.get('off_carbs')),
+                        portions=portions_dict,
+                        owner=request.user
                     )
                 
                 if food_obj:
-                    weight_val = str(weight).replace(',', '.')
                     item.meal = target_meal
                     item.food = food_obj
-                    item.weight_grams = weight_val
+                    item.weight_grams = final_weight
                     item.save()
-            except (Food.DoesNotExist, ValueError):
+            except Exception as e:
+                print(f"ERROR EDITING MEAL ITEM: {e}")
                 pass
                 
         date_iso = target_meal.date.isoformat()
@@ -557,6 +607,16 @@ def add_by_barcode(request):
                     except ValueError:
                         return 0.0
 
+                serving_qty = product.get('serving_quantity')
+                serving_text = product.get('serving_size')
+                
+                custom_portions = {}
+                if serving_qty:
+                    qty_float = safe_float(serving_qty)
+                    if qty_float > 0:
+                        portion_name = serving_text if serving_text else f"Portion ({qty_float}g/ml)"
+                        custom_portions[portion_name] = qty_float
+
                 request.session['scanned_food'] = {
                     'name': name,
                     'barcode': barcode,
@@ -564,6 +624,7 @@ def add_by_barcode(request):
                     'protein': safe_float(nutriments.get('proteins_100g', 0)),
                     'fat': safe_float(nutriments.get('fat_100g', 0)),
                     'carbs': safe_float(nutriments.get('carbohydrates_100g', 0)),
+                    'portions': custom_portions,
                 }
                 return redirect(redirect_url)
             else:

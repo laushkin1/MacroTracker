@@ -24,6 +24,8 @@ class Food(models.Model):
     fat = models.DecimalField(max_digits=5, decimal_places=1, default=0, verbose_name="Fat (per 100g)")
     carbs = models.DecimalField(max_digits=5, decimal_places=1, default=0, verbose_name="Carb (per 100g)")
 
+    portions = models.JSONField(default=dict, blank=True, verbose_name="Custom Portions")
+
     owner = models.ForeignKey(
         User,
         on_delete=models.CASCADE,

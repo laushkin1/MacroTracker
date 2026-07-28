@@ -55,10 +55,22 @@
                 </div>
 
                 <!-- Weight -->
-                <div style="margin-bottom: 24px;">
-                    <label for="id_weight_grams" style="display: block; font-weight: bold; margin-bottom: 8px;">Weight (grams):</label>
-                    <input type="number" id="id_weight_grams" name="weight_grams" step="any" min="0.01"
-                           placeholder="e.g. 150" value="{% if is_edit %}{{ item.weight_grams }}{% endif %}" required>
+                <input type="hidden" name="off_portions" id="off_portions">
+
+                <!-- Amount and Portion -->
+                <div style="display: flex; gap: 10px; align-items: flex-end; margin-bottom: 24px;">
+                    <div style="flex: 1;">
+                        <label for="id_quantity" style="display: block; font-weight: bold; margin-bottom: 8px;">Amount:</label>
+                        <input type="number" id="id_quantity" name="quantity" step="any" min="0.01"
+                            value="{% if is_edit %}{{ item.weight_grams|floatformat:-2 }}{% else %}1{% endif %}" required>
+                    </div>
+                    <div style="flex: 2;">
+                        <label for="id_portion" style="display: block; font-weight: bold; margin-bottom: 8px;">Unit:</label>
+                        <select id="id_portion" name="portion_multiplier" required style="width: 100%; padding: 14px; border-radius: 8px; border: 1px solid var(--border); background-color: #fff;">
+                            <option value="1">1 g / ml</option>
+                            <option value="100">100 g / ml</option>
+                        </select>
+                    </div>
                 </div>
 
                 <button type="submit" class="btn">Save</button>
@@ -81,6 +93,20 @@
     const hiddenInput = document.getElementById('id_food');
     const btnSearchOff = document.getElementById('btn_search_off');
 
+    function updatePortionsDropdown(portionsObj) {
+        const select = document.getElementById('id_portion');
+        select.innerHTML = '<option value="1">1 g / ml</option><option value="100">100 g / ml</option>';
+        
+        if (portionsObj) {
+            for (const [name, weight] of Object.entries(portionsObj)) {
+                const opt = document.createElement('option');
+                opt.value = weight;
+                opt.innerText = name;
+                select.appendChild(opt);
+            }
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         const pending = sessionStorage.getItem('off_pending_food');
         if (pending) {
@@ -95,6 +121,8 @@
             document.getElementById('off_protein').value = item.protein;
             document.getElementById('off_fat').value = item.fat;
             document.getElementById('off_carbs').value = item.carbs;
+            document.getElementById('off_portions').value = item.portions ? JSON.stringify(item.portions) : '{}';
+            updatePortionsDropdown(item.portions);
             
             sessionStorage.removeItem('off_pending_food');
         }
@@ -126,6 +154,7 @@
                 searchInput.value = item.name;
                 document.getElementById('off_name').value = '';
                 listContainer.style.display = 'none';
+                updatePortionsDropdown(item.portions);
             };
             listContainer.appendChild(div);
         });
