@@ -3,61 +3,115 @@
 {% block title %}{% if is_edit %}Edit{% else %}Add{% endif %} Food{% endblock %}
 
 {% block content %}
-    <h2>{% if is_edit %}Edit{% else %}Add{% endif %} Food</h2>
 
-    <div class="card">
-        <form method="post">
-            {% csrf_token %}
+    <div id="main_view">
+        <h2>{% if is_edit %}Edit{% else %}Add{% endif %} Food</h2>
 
-            <!-- Meal selection -->
-            <div style="margin-bottom: 20px;">
-                <label for="id_meal" style="display: block; font-weight: bold; margin-bottom: 8px;">Meal:</label>
-                <select name="meal_id" id="id_meal" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background-color: #fff;" required>
-                    <option value="" disabled {% if not selected_meal_id %}selected{% endif %}>Select a meal...</option>
-                    {% for m in meals %}
-                        <option value="{{ m.id }}" {% if m.id == selected_meal_id %}selected{% endif %}>{{ m.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
+        <div class="card">
+            <form method="post" id="meal_item_form">
+                {% csrf_token %}
 
-            <!-- Food search -->
-            <div style="margin-bottom: 20px;">
-                <label style="display: block; font-weight: bold; margin-bottom: 8px;">Food:</label>
-                <div style="position: relative;">
-                    <input type="text" id="food_search" placeholder="Search food or barcode…" autocomplete="off"
-                           value="{% if is_edit %}{{ item.food.name }}{% endif %}">
-                    <label style="font-size: 0.85em; margin-top: 5px; display: flex; align-items: center; justify-content: flex-start; gap: 8px; color: var(--text-muted); cursor: pointer; text-align: left;">
-                        <input type="checkbox" id="off-search-toggle" style="width: auto; margin: 0; padding: 0;"> Search in OpenFoodFacts
-                    </label>
-                    <div id="food_list_container" style="max-height: 200px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; display: none; background: #fff; position: absolute; width: 100%; z-index: 10; box-shadow: 0 4px 12px rgba(0,0,0,0.1);"></div>
+                <!-- Meal selection -->
+                <div style="margin-bottom: 20px;">
+                    <label for="id_meal" style="display: block; font-weight: bold; margin-bottom: 8px;">Meal:</label>
+                    <select name="meal_id" id="id_meal" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background-color: #fff;" required>
+                        <option value="" disabled {% if not selected_meal_id %}selected{% endif %}>Select a meal...</option>
+                        {% for m in meals %}
+                            <option value="{{ m.id }}" {% if m.id == selected_meal_id %}selected{% endif %}>{{ m.name }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
-                <input type="hidden" name="food_id" id="id_food" value="{% if is_edit %}{{ item.food.id }}{% endif %}" required>
-            </div>
 
-            <!-- Weight -->
-            <div style="margin-bottom: 24px;">
-                <label for="id_weight_grams" style="display: block; font-weight: bold; margin-bottom: 8px;">Weight (grams):</label>
-                <input type="number" id="id_weight_grams" name="weight_grams" step="any" min="0.01"
-                       placeholder="e.g. 150" value="{% if is_edit %}{{ item.weight_grams }}{% endif %}" required>
-            </div>
+                <!-- Food search -->
+                <div style="margin-bottom: 20px; position: relative;">
+                    <label style="display: block; font-weight: bold; margin-bottom: 8px;">Food:</label>
+                    
+                    <div style="position: relative; display: flex; align-items: center;">
+                        <input type="text" id="food_search" placeholder="Search food or barcode…" autocomplete="off"
+                               value="{% if is_edit %}{{ item.food.name }}{% endif %}" 
+                               style="width: 100%; padding-right: 45px; margin-bottom: 0;">
+                        
+                        <button type="button" id="btn_search_off" aria-label="Search OpenFoodFacts" style="position: absolute; right: 5px; background: none; border: none; cursor: pointer; color: var(--text-main); display: flex; align-items: center; justify-content: center; padding: 8px; border-radius: 6px;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                                <polyline points="12 5 19 12 12 19"></polyline>
+                            </svg>
+                        </button>
+                    </div>
 
-            <button type="submit" class="btn">Save</button>
-        </form>
+                    <div style="font-size: 0.85em; margin-top: 5px; color: var(--text-muted); text-align: left;">
+                        To Search in OpenFoodFacts press <span style="font-weight: bold; font-size: 1.1em;">&rarr;</span>
+                    </div>
+
+                    <div id="food_list_container" style="max-height: 200px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; display: none; background: #fff; position: absolute; top: 100%; left: 0; width: 100%; z-index: 10; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-top: 5px;"></div>
+                    
+                    <input type="hidden" name="food_id" id="id_food" value="{% if is_edit %}{{ item.food.id }}{% endif %}">
+                    <input type="hidden" name="off_name" id="off_name">
+                    <input type="hidden" name="off_barcode" id="off_barcode">
+                    <input type="hidden" name="off_kcal" id="off_kcal">
+                    <input type="hidden" name="off_protein" id="off_protein">
+                    <input type="hidden" name="off_fat" id="off_fat">
+                    <input type="hidden" name="off_carbs" id="off_carbs">
+                </div>
+
+                <!-- Weight -->
+                <div style="margin-bottom: 24px;">
+                    <label for="id_weight_grams" style="display: block; font-weight: bold; margin-bottom: 8px;">Weight (grams):</label>
+                    <input type="number" id="id_weight_grams" name="weight_grams" step="any" min="0.01"
+                           placeholder="e.g. 150" value="{% if is_edit %}{{ item.weight_grams }}{% endif %}" required>
+                </div>
+
+                <button type="submit" class="btn">Save</button>
+            </form>
+        </div>
+
+        <div style="text-align: center; margin-top: 10px;">
+            <a href="{% url 'tracker:dashboard' %}?date={{ current_date|date:'Y-m-d' }}">&larr; Cancel</a>
+        </div>
     </div>
 
-    <div style="text-align: center; margin-top: 10px;">
-        <a href="{% url 'tracker:dashboard' %}?date={{ current_date|date:'Y-m-d' }}">&larr; Cancel</a>
-    </div>
+    <style>
+        #btn_search_off:hover { background-color: rgba(0,0,0,0.05); }
+    </style>
 
     <script>
     const foods = {{ foods_json|safe }};
     const searchInput = document.getElementById('food_search');
     const listContainer = document.getElementById('food_list_container');
     const hiddenInput = document.getElementById('id_food');
-    const offToggle = document.getElementById('off-search-toggle');
-    let searchTimeout;
+    const btnSearchOff = document.getElementById('btn_search_off');
 
-    function renderList(items) {
+    document.addEventListener('DOMContentLoaded', () => {
+        const pending = sessionStorage.getItem('off_pending_food');
+        if (pending) {
+            const item = JSON.parse(pending);
+            
+            document.getElementById('food_search').value = item.name;
+            document.getElementById('id_food').value = ''; 
+            
+            document.getElementById('off_name').value = item.name;
+            document.getElementById('off_barcode').value = item.barcode;
+            document.getElementById('off_kcal').value = item.kcal;
+            document.getElementById('off_protein').value = item.protein;
+            document.getElementById('off_fat').value = item.fat;
+            document.getElementById('off_carbs').value = item.carbs;
+            
+            sessionStorage.removeItem('off_pending_food');
+        }
+    });
+
+    btnSearchOff.addEventListener('click', () => {
+        const q = searchInput.value.trim();
+        if (!q) {
+            alert("Please enter a food name or barcode to search.");
+            return;
+        }
+        const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
+        const offUrl = `{% url 'tracker:off_search' %}?return_to=${returnUrl}&q=${encodeURIComponent(q)}`;
+        window.location.href = offUrl;
+    });
+
+    function renderLocalList(items) {
         listContainer.innerHTML = '';
         if (!items.length) { listContainer.style.display = 'none'; return; }
         listContainer.style.display = 'block';
@@ -65,86 +119,25 @@
         items.forEach(item => {
             const div = document.createElement('div');
             div.style.cssText = 'padding:12px 15px;cursor:pointer;border-bottom:1px solid #eee;';
+            div.innerHTML = item.name;
             
-            div.innerHTML = item.isLocal ? item.name : `<b>${item.name}</b> <small style="color:gray;">(OpenFoodFacts)</small>`;
-            
-            div.onclick = async () => {
-                if (item.isLocal) {
-                    hiddenInput.value = item.id;
-                    searchInput.value = item.name;
-                    listContainer.style.display = 'none';
-                } else {
-                    searchInput.value = "Saving to database...";
-                    listContainer.style.display = 'none';
-                    
-                    try {
-                        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-                        const response = await fetch("{% url 'tracker:save_off_food' %}", {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRFToken': csrfToken
-                            },
-                            body: JSON.stringify(item)
-                        });
-                        
-                        const data = await response.json();
-                        if (data.id) {
-                            hiddenInput.value = data.id;
-                            searchInput.value = item.name;
-                            foods.push({ id: data.id, name: item.name, isLocal: true });
-                        } else {
-                            alert("Failed to save food.");
-                            searchInput.value = "";
-                        }
-                    } catch (err) {
-                        console.error("Error saving food:", err);
-                        alert("Network error.");
-                        searchInput.value = "";
-                    }
-                }
+            div.onclick = () => {
+                hiddenInput.value = item.id;
+                searchInput.value = item.name;
+                document.getElementById('off_name').value = '';
+                listContainer.style.display = 'none';
             };
             listContainer.appendChild(div);
         });
     }
 
     searchInput.addEventListener('input', e => {
-        clearTimeout(searchTimeout);
         const q = e.target.value.toLowerCase().trim();
-        const searchOFF = offToggle.checked;
-
-        if (!q) { renderList(foods.map(f => ({...f, isLocal: true}))); return; }
+        if (!q) { renderLocalList(foods); return; }
 
         const sw = foods.filter(f => f.name.toLowerCase().startsWith(q) || (f.barcode && f.barcode.startsWith(q)));
         const cn = foods.filter(f => !sw.includes(f) && (f.name.toLowerCase().includes(q) || (f.barcode && f.barcode.includes(q))));
-        let results = [...sw, ...cn].map(f => ({ ...f, isLocal: true }));
-        
-        renderList(results);
-
-        if (searchOFF && q.length >= 3) {
-            searchTimeout = setTimeout(() => {
-                fetch(`https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=10`)
-                .then(res => res.json())
-                .then(data => {
-                    if (!data.products) return;
-                    
-                    const offResults = data.products
-                        .filter(p => p.product_name)
-                        .map(p => ({
-                            name: p.product_name + (p.brands ? ` (${p.brands})` : ''),
-                            barcode: p.code,
-                            kcal: p.nutriments?.['energy-kcal_100g'] || 0,
-                            protein: p.nutriments?.['proteins_100g'] || 0,
-                            fat: p.nutriments?.['fat_100g'] || 0,
-                            carbs: p.nutriments?.['carbohydrates_100g'] || 0,
-                            isLocal: false
-                        }));
-                    
-                    renderList([...results, ...offResults]);
-                })
-                .catch(err => console.error("OFF API error:", err));
-            }, 500);
-        }
+        renderLocalList([...sw, ...cn]);
     });
 
     searchInput.addEventListener('focus', () => searchInput.dispatchEvent(new Event('input')));

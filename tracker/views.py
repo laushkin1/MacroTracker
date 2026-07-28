@@ -13,7 +13,7 @@ import json
 import urllib.request
 
 from .models import Meal, MealItem, Food, UserProfile
-from .forms import MealForm, MealItemForm, FoodForm, ProfileForm, UsernameChangeForm
+from .forms import MealItemForm, FoodForm, ProfileForm, UsernameChangeForm
 
 from django.contrib.auth import login
 from django.contrib.auth.forms import UserCreationForm
@@ -332,136 +332,11 @@ def _get_foods_json(user):
     return json.dumps(list(qs.values('id', 'name', 'barcode')))
 
 
-@login_required
-def meal_create(request):
-    """Create a Meal container with one or more food items."""
-    date_param = request.GET.get('date', '')
-    foods_json = _get_foods_json(request.user)
-
-    if request.method == 'POST':
-        form = MealForm(request.POST)
-        if form.is_valid():
-            meal = form.save(commit=False)
-            meal.user = request.user
-            meal.save()
-
-            # Parse submitted food items (food_id_N, weight_N)
-            i = 0
-            while True:
-                food_id = request.POST.get(f'food_id_{i}')
-                weight = request.POST.get(f'weight_{i}')
-                if food_id is None and weight is None:
-                    break
-                if food_id and weight:
-                    try:
-                        food_obj = Food.objects.get(pk=food_id)
-                        weight_val = str(weight).replace(',', '.')
-                        MealItem.objects.create(
-                            meal=meal,
-                            food=food_obj,
-                            weight_grams=weight_val
-                        )
-                    except (Food.DoesNotExist, ValueError):
-                        pass
-                i += 1
-
-            date_iso = meal.date.isoformat()
-            return redirect(f"{reverse('tracker:dashboard')}?date={date_iso}")
-    else:
-        form = MealForm(initial={'date': date_param} if date_param else {})
-
-    return render(request, 'tracker/meal_form.html', {
-        'form': form,
-        'foods_json': foods_json,
-        'is_edit': False,
-    })
-
-
-@login_required
-def meal_edit(request, pk):
-    """Edit a Meal container (name, date) and its food items."""
-    meal = get_object_or_404(Meal, pk=pk, user=request.user)
-    foods_json = _get_foods_json(request.user)
-
-    if request.method == 'POST':
-        form = MealForm(request.POST, instance=meal)
-        if form.is_valid():
-            form.save()
-
-            # Replace all items with submitted ones
-            meal.items.all().delete()
-            i = 0
-            while True:
-                food_id = request.POST.get(f'food_id_{i}')
-                weight = request.POST.get(f'weight_{i}')
-                if food_id is None and weight is None:
-                    break
-                if food_id and weight:
-                    try:
-                        food_obj = Food.objects.get(pk=food_id)
-                        weight_val = str(weight).replace(',', '.')
-                        MealItem.objects.create(
-                            meal=meal,
-                            food=food_obj,
-                            weight_grams=weight_val
-                        )
-                    except (Food.DoesNotExist, ValueError):
-                        pass
-                i += 1
-
-            date_iso = meal.date.isoformat()
-            return redirect(f"{reverse('tracker:dashboard')}?date={date_iso}")
-    else:
-        form = MealForm(instance=meal)
-
-    # Serialize existing items for JS pre-population
-    existing_items = list(meal.items.values('food_id', 'food__name', 'weight_grams'))
-
-    return render(request, 'tracker/meal_form.html', {
-        'form': form,
-        'foods_json': foods_json,
-        'is_edit': True,
-        'meal': meal,
-        'existing_items_json': json.dumps(existing_items, default=str),
-    })
-
-
-@login_required
-def meal_delete(request, pk):
-    meal = get_object_or_404(Meal, pk=pk, user=request.user)
-    date_iso = meal.date.isoformat()
-    if request.method == 'POST':
-        meal.delete()
-        return redirect(f"{reverse('tracker:dashboard')}?date={date_iso}")
-    return render(request, 'tracker/meal_confirm_delete.html', {'meal': meal})
-
-
-@login_required
-def meal_duplicate(request, pk):
-    """Duplicate a Meal container (same date) with all its items."""
-    meal = get_object_or_404(Meal, pk=pk, user=request.user)
-    items = list(meal.items.all())
-    new_meal = Meal.objects.create(
-        user=request.user,
-        name=meal.name,
-        date=meal.date,
-    )
-    for item in items:
-        MealItem.objects.create(
-            meal=new_meal,
-            food=item.food,
-            weight_grams=item.weight_grams,
-        )
-    date_iso = meal.date.isoformat()
-    return redirect(f"{reverse('tracker:dashboard')}?date={date_iso}")
-
-
 # --- MEAL ITEM CRUD ---
 @login_required
 def meal_item_add(request, meal_pk=None):
-    """Add a food item to a Meal container (with or without pre-selected meal)."""
+    """Add a food item to a Meal container."""
     meal = None
-    meals = []
     
     if meal_pk:
         meal = get_object_or_404(Meal, pk=meal_pk, user=request.user)
@@ -485,7 +360,6 @@ def meal_item_add(request, meal_pk=None):
     meals.sort(key=lambda m: DEFAULT_MEALS.index(m.name) if m.name in DEFAULT_MEALS else 999)
     
     selected_meal_id = meal.pk if meal else None
-
     foods_json = _get_foods_json(request.user)
 
     if request.method == 'POST':
@@ -494,12 +368,27 @@ def meal_item_add(request, meal_pk=None):
 
         food_id = request.POST.get('food_id')
         weight = request.POST.get('weight_grams')
+        off_name = request.POST.get('off_name')
         
-        if food_id and weight:
+        if weight and (food_id or off_name):
             try:
-                food_obj = Food.objects.get(pk=food_id)
-                weight_val = str(weight).replace(',', '.')
-                MealItem.objects.create(meal=target_meal, food=food_obj, weight_grams=weight_val)
+                food_obj = None
+                
+                if food_id:
+                    food_obj = Food.objects.get(pk=food_id)
+                elif off_name:
+                    food_obj = Food.objects.create(
+                        name=off_name,
+                        barcode=request.POST.get('off_barcode', ''),
+                        calories=float(request.POST.get('off_kcal') or 0),
+                        protein=float(request.POST.get('off_protein') or 0),
+                        fat=float(request.POST.get('off_fat') or 0),
+                        carbs=float(request.POST.get('off_carbs') or 0)
+                    )
+                
+                if food_obj:
+                    weight_val = str(weight).replace(',', '.')
+                    MealItem.objects.create(meal=target_meal, food=food_obj, weight_grams=weight_val)
             except (Food.DoesNotExist, ValueError):
                 pass
                 
@@ -539,27 +428,40 @@ def meal_item_edit(request, pk):
 
         food_id = request.POST.get('food_id')
         weight = request.POST.get('weight_grams')
+        off_name = request.POST.get('off_name')
         
-        if food_id and weight:
+        if weight and (food_id or off_name):
             try:
-                food_obj = Food.objects.get(pk=food_id)
-                weight_val = str(weight).replace(',', '.')
+                food_obj = None
                 
-                item.meal = target_meal
-                item.food = food_obj
-                item.weight_grams = weight_val
-                item.save()
+                if food_id:
+                    food_obj = Food.objects.get(pk=food_id)
+                elif off_name:
+                    food_obj = Food.objects.create(
+                        name=off_name,
+                        barcode=request.POST.get('off_barcode', ''),
+                        calories=float(request.POST.get('off_kcal') or 0),
+                        protein=float(request.POST.get('off_protein') or 0),
+                        fat=float(request.POST.get('off_fat') or 0),
+                        carbs=float(request.POST.get('off_carbs') or 0)
+                    )
+                
+                if food_obj:
+                    weight_val = str(weight).replace(',', '.')
+                    item.meal = target_meal
+                    item.food = food_obj
+                    item.weight_grams = weight_val
+                    item.save()
             except (Food.DoesNotExist, ValueError):
                 pass
                 
         date_iso = target_meal.date.isoformat()
         return redirect(f"{reverse('tracker:dashboard')}?date={date_iso}")
-
+        
     return render(request, 'tracker/meal_item_form.html', {
-        'meal': current_meal,
-        'meals': meals,
-        'selected_meal_id': current_meal.pk,
         'item': item,
+        'meals': meals,
+        'selected_meal_id': current_meal.id,
         'foods_json': foods_json,
         'is_edit': True,
         'current_date': current_date,
@@ -713,3 +615,7 @@ def save_off_food(request):
         
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
+    
+
+def off_search(request):
+    return render(request, 'tracker/off_search.html')

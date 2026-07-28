@@ -45,3 +45,9 @@
 - Feature: Integrated OpenFoodFacts API search with an opt-in toggle directly into food selection views, enabling users to fetch and auto-save external products into their local database on the fly.
 - UI/UX: Restructured the dashboard by moving the custom meal creation action to a dedicated + Add Meal button and introducing a standalone Calendar button for improved navigation clarity.
 - UI/UX: Enhanced the food item edit view to support transferring items between different meal containers within the same date.
+
+### 2026-07-28
+- Feature: Replaced the "Search in OpenFoodFacts" checkbox with an advanced search mechanism, adding a dedicated arrow button that redirects users to a dedicated search results page displaying detailed food cards with macro breakdowns (calories, protein, fat, carbs) styled like the main Food Database.
+- UI/UX: Streamlined the meal container architecture by removing custom meal creation entirely (deleted the "+ Add Meal" button, meal dropdown menus, and associated confirmation/form templates), locking the daily structure permanently to the 6 default meal slots.
+- Bugfix: Fixed form validation handling when adding food items to meals, preventing accidental redirection and data loss if the weight field is left empty or invalid.
+- Feature: Enhanced the OpenFoodFacts integration to display full macro nutrients (calories, protein, fat, and carbs per 100g) directly within search results and selection views.

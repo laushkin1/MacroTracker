@@ -13,26 +13,6 @@ class FoodForm(forms.ModelForm):
         }
 
 
-class MealForm(forms.ModelForm):
-    class Meta:
-        model = Meal
-        fields = ['name', 'date']
-        widgets = {
-            'date': forms.DateInput(attrs={'type': 'date'}),
-            'name': forms.TextInput(attrs={'placeholder': 'e.g. Breakfast, Lunch…'}),
-        }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['date'].widget.attrs['max'] = timezone.now().date().isoformat()
-
-    def clean_date(self):
-        selected_date = self.cleaned_data.get('date')
-        if selected_date and selected_date > timezone.now().date():
-            raise ValidationError("You cannot log meals in the future.")
-        return selected_date
-
-
 class MealItemForm(forms.ModelForm):
     class Meta:
         model = MealItem

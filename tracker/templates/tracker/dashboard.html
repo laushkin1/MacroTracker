@@ -38,90 +38,72 @@
         <a href="{% url 'tracker:meal_item_add' %}?date={{ current_date|date:'Y-m-d' }}" class="btn btn-outline" style="width: auto; padding: 8px 15px; margin: 0;">+ Add Food</a>
     </div>
 
-    {% if meals %}
-        <ul class="meal-list" id="meal-containers">
-            {% for meal in meals %}
-                <li class="meal-container" id="meal-{{ meal.pk }}">
-                    <!-- Container header -->
-                    <div class="meal-header">
-                        <span class="meal-title">{{ meal.name }}</span>
-                        <div class="meal-right">
-                            <span class="meal-weight">{{ meal.total_weight|floatformat:"-2" }}g</span>
-                            <!-- 3-dot menu for container -->
-                            <div class="dropdown">
-                                <button type="button" class="dropdown-btn" aria-label="Meal options">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                                        <circle cx="12" cy="5" r="2"/>
-                                        <circle cx="12" cy="12" r="2"/>
-                                        <circle cx="12" cy="19" r="2"/>
-                                    </svg>
-                                </button>
-                                <div class="dropdown-menu">
-                                    <a href="{% url 'tracker:meal_duplicate' meal.pk %}" class="dropdown-item">Duplicate</a>
-                                    <a href="{% url 'tracker:meal_edit' meal.pk %}?date={{ current_date|date:'Y-m-d' }}" class="dropdown-item">Edit</a>
-                                    <a href="{% url 'tracker:meal_delete' meal.pk %}" class="dropdown-item delete">Delete</a>
-                                </div>
-                            </div>
-                            <!-- Toggle expand/collapse arrow -->
-                            <button type="button" class="toggle-btn" data-target="meal-{{ meal.pk }}" aria-label="Expand meal">
-                                <svg class="arrow-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                    <polyline points="9 18 15 12 9 6"/>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
 
-                    <!-- Container total macros -->
-                    <div class="meal-stats">
-                        Cal: {{ meal.total_calories|floatformat:1 }} | P: {{ meal.total_protein|floatformat:1 }}g | F: {{ meal.total_fat|floatformat:1 }}g | C: {{ meal.total_carbs|floatformat:1 }}g
+    <ul class="meal-list" id="meal-containers">
+        {% for meal in meals %}
+            <li class="meal-container" id="meal-{{ meal.pk }}">
+                <!-- Container header -->
+                <div class="meal-header">
+                    <span class="meal-title">{{ meal.name }}</span>
+                    <div class="meal-right">
+                        <span class="meal-weight">{{ meal.total_weight|floatformat:"-2" }}g</span>
+                        <!-- Toggle expand/collapse arrow -->
+                        <button type="button" class="toggle-btn" data-target="meal-{{ meal.pk }}" aria-label="Expand meal">
+                            <svg class="arrow-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="9 18 15 12 9 6"/>
+                            </svg>
+                        </button>
                     </div>
+                </div>
 
-                    <!-- Expanded food items -->
-                    <div class="meal-items-wrapper" id="items-{{ meal.pk }}">
-                        {% for item in meal.items.all %}
-                            <div class="meal-item">
-                                <div class="meal-header">
-                                    <span class="meal-title">{{ item.food.name }}</span>
-                                    <div class="meal-right">
-                                        <span class="meal-weight">{{ item.weight_grams|floatformat:"-2" }}g</span>
-                                        <!-- 3-dot menu for food item -->
-                                        <div class="dropdown">
-                                            <button type="button" class="dropdown-btn" aria-label="Item options">
-                                                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                                                    <circle cx="12" cy="5" r="2"/>
-                                                    <circle cx="12" cy="12" r="2"/>
-                                                    <circle cx="12" cy="19" r="2"/>
-                                                </svg>
-                                            </button>
-                                            <div class="dropdown-menu">
-                                                <a href="{% url 'tracker:meal_item_duplicate' item.pk %}" class="dropdown-item">Duplicate</a>
-                                                <a href="{% url 'tracker:meal_item_edit' item.pk %}?date={{ current_date|date:'Y-m-d' }}" class="dropdown-item">Edit</a>
-                                                <form method="post" action="{% url 'tracker:meal_item_delete' item.pk %}" style="margin:0;">
-                                                    {% csrf_token %}
-                                                    <button type="submit" class="dropdown-item delete" style="width:100%;background:none;border:none;cursor:pointer;text-align:left;">Delete</button>
-                                                </form>
-                                            </div>
+                <!-- Container total macros -->
+                <div class="meal-stats">
+                    Cal: {{ meal.total_calories|floatformat:1 }} | P: {{ meal.total_protein|floatformat:1 }}g | F: {{ meal.total_fat|floatformat:1 }}g | C: {{ meal.total_carbs|floatformat:1 }}g
+                </div>
+
+                <!-- Expanded food items -->
+                <div class="meal-items-wrapper" id="items-{{ meal.pk }}">
+                    {% for item in meal.items.all %}
+                        <div class="meal-item">
+                            <div class="meal-header">
+                                <span class="meal-title">{{ item.food.name }}</span>
+                                <div class="meal-right">
+                                    <span class="meal-weight">{{ item.weight_grams|floatformat:"-2" }}g</span>
+                                    <!-- 3-dot menu for food item -->
+                                    <div class="dropdown">
+                                        <button type="button" class="dropdown-btn" aria-label="Item options">
+                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                                <circle cx="12" cy="5" r="2"/>
+                                                <circle cx="12" cy="12" r="2"/>
+                                                <circle cx="12" cy="19" r="2"/>
+                                            </svg>
+                                        </button>
+                                        <div class="dropdown-menu">
+                                            <a href="{% url 'tracker:meal_item_duplicate' item.pk %}" class="dropdown-item">Duplicate</a>
+                                            <a href="{% url 'tracker:meal_item_edit' item.pk %}?date={{ current_date|date:'Y-m-d' }}" class="dropdown-item">Edit</a>
+                                            <form method="post" action="{% url 'tracker:meal_item_delete' item.pk %}" style="margin:0;">
+                                                {% csrf_token %}
+                                                <button type="submit" class="dropdown-item delete" style="width:100%;background:none;border:none;cursor:pointer;text-align:left;">Delete</button>
+                                            </form>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="meal-stats">
-                                    Cal: {{ item.total_calories|floatformat:1 }} | P: {{ item.total_protein|floatformat:1 }}g | F: {{ item.total_fat|floatformat:1 }}g | C: {{ item.total_carbs|floatformat:1 }}g
-                                </div>
                             </div>
-                        {% endfor %}
+                            <div class="meal-stats">
+                                Cal: {{ item.total_calories|floatformat:1 }} | P: {{ item.total_protein|floatformat:1 }}g | F: {{ item.total_fat|floatformat:1 }}g | C: {{ item.total_carbs|floatformat:1 }}g
+                            </div>
+                        </div>
+                    {% endfor %}
 
-                        <!-- Add food to this container -->
-                        <a href="{% url 'tracker:meal_item_add' meal.pk %}" class="btn btn-outline meal-add-food-btn">+ Add Food</a>
-                    </div>
-                </li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p style="margin-top: 20px;">No meals logged for this date.</p>
-    {% endif %}
+                    <!-- Add food to this container -->
+                    <a href="{% url 'tracker:meal_item_add' meal.pk %}" class="btn btn-outline meal-add-food-btn">+ Add Food</a>
+                </div>
+            </li>
+        {% endfor %}
+    </ul>
+
 
     <div style="margin-top: 30px; display: flex; flex-direction: column; gap: 10px;">
-        <a href="{% url 'tracker:meal_create' %}?date={{ current_date|date:'Y-m-d' }}" class="btn btn-outline">🍽️ Add Meal</a>
         <a href="{% url 'tracker:food_list' %}?date={{ current_date|date:'Y-m-d' }}" class="btn btn-outline">🥗 Manage Food Database</a>
         <a href="{% url 'tracker:settings' %}" class="btn btn-outline">⚙️ Settings</a>
         <a href="{% url 'tracker:monthly_dashboard' %}" class="btn btn-outline">📅 Calendar</a>

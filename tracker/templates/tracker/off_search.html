@@ -1,0 +1,122 @@
+{% extends 'tracker/base.html' %}
+
+{% block title %}Search OpenFoodFacts{% endblock %}
+
+{% block content %}
+    <div id="off_view">
+        <a href="/" id="btn_back_to_form" class="btn btn-outline" style="width: auto; padding: 8px 15px; margin-bottom: 20px; display: inline-block;">
+            &larr; Back
+        </a>
+        
+        <h2 style="margin-bottom: 15px;">OpenFoodFacts Results</h2>
+        <p style="text-align: center; color: var(--text-muted); margin-top: -10px; margin-bottom: 20px;">
+            Searching for: <strong id="off_search_term" style="color: var(--text-main);"></strong>
+        </p>
+
+        <div id="off_loading" style="text-align: center; padding: 30px;">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation: spin 1s linear infinite;">
+                <line x1="12" y1="2" x2="12" y2="6"></line>
+                <line x1="12" y1="18" x2="12" y2="22"></line>
+                <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
+                <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
+                <line x1="2" y1="12" x2="6" y2="12"></line>
+                <line x1="18" y1="12" x2="22" y2="12"></line>
+                <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
+                <line x1="16.24" y1="4.93" x2="19.07" y2="7.76"></line>
+            </svg>
+            <p style="margin-top: 10px;">Searching database...</p>
+        </div>
+
+        <div id="off_no_results" class="card" style="text-align: center; display: none;">
+            <p>No matching food found in OpenFoodFacts.</p>
+            <p style="font-size: 0.9em; margin-top: 5px;">Try a different name or check the spelling.</p>
+        </div>
+
+        <ul id="off_results_list" class="meal-list" style="margin-top: 15px;"></ul>
+    </div>
+
+    <style>
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+    </style>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const params = new URLSearchParams(window.location.search);
+        const q = params.get('q');
+        const returnTo = params.get('return_to') || '/';
+
+        document.getElementById('btn_back_to_form').href = returnTo;
+
+        const offLoading = document.getElementById('off_loading');
+        const offNoResults = document.getElementById('off_no_results');
+        const offResultsList = document.getElementById('off_results_list');
+        const offSearchTerm = document.getElementById('off_search_term');
+
+        if (!q) {
+            offLoading.style.display = 'none';
+            offNoResults.style.display = 'block';
+            return;
+        }
+
+        offSearchTerm.innerText = q;
+
+        fetch(`https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=20`)
+            .then(res => res.json())
+            .then(data => {
+                offLoading.style.display = 'none';
+                
+                if (!data.products || data.products.length === 0) {
+                    offNoResults.style.display = 'block';
+                    return;
+                }
+
+                const offResults = data.products
+                    .filter(p => p.product_name)
+                    .map(p => ({
+                        name: p.product_name + (p.brands ? ` (${p.brands})` : ''),
+                        barcode: p.code || '',
+                        kcal: p.nutriments?.['energy-kcal_100g'] || 0,
+                        protein: p.nutriments?.['proteins_100g'] || 0,
+                        fat: p.nutriments?.['fat_100g'] || 0,
+                        carbs: p.nutriments?.['carbohydrates_100g'] || 0
+                    }));
+                
+                if (offResults.length === 0) {
+                    offNoResults.style.display = 'block';
+                    return;
+                }
+
+                offResults.forEach(item => {
+                    const li = document.createElement('li');
+                    li.className = 'meal-container food-item';
+                    li.style.cursor = 'pointer';
+                    li.style.transition = 'background-color 0.15s';
+                    li.onmouseover = () => li.style.backgroundColor = 'rgba(0,0,0,0.02)';
+                    li.onmouseout = () => li.style.backgroundColor = 'var(--card-bg)';
+                    
+                    li.innerHTML = `
+                        <div class="meal-header">
+                            <span class="meal-title">${item.name}</span>
+                        </div>
+                        <div class="meal-stats">
+                            Cal: ${Number(item.kcal).toFixed(1)} | P: ${Number(item.protein).toFixed(1)}g | F: ${Number(item.fat).toFixed(1)}g | C: ${Number(item.carbs).toFixed(1)}g
+                        </div>
+                    `;
+
+                    li.onclick = () => {
+                        sessionStorage.setItem('off_pending_food', JSON.stringify(item));
+                        window.location.href = returnTo;
+                    };
+                    
+                    offResultsList.appendChild(li);
+                });
+            })
+            .catch(err => {
+                console.error("OFF API error:", err);
+                offLoading.style.display = 'none';
+                offNoResults.style.display = 'block';
+                offNoResults.innerHTML = "<p>Error connecting to OpenFoodFacts.</p>";
+            });
+    });
+    </script>
+{% endblock %}
