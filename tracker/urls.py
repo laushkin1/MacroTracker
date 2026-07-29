@@ -18,8 +18,7 @@ urlpatterns = [
 
     path('off-search/', views.off_search, name='off_search'),
 
-    # MealItem Routes
-    path('meal/<int:meal_pk>/item/add/', views.meal_item_add, name='meal_item_add'),
+    # MealItem Routes (Удален старый путь с meal_pk)
     path('meal-item/add/', views.meal_item_add, name='meal_item_add'),
     path('meal-item/<int:pk>/edit/', views.meal_item_edit, name='meal_item_edit'),
     path('meal-item/<int:pk>/delete/', views.meal_item_delete, name='meal_item_delete'),

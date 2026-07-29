@@ -41,14 +41,14 @@
 
     <ul class="meal-list" id="meal-containers">
         {% for meal in meals %}
-            <li class="meal-container" id="meal-{{ meal.pk }}">
+            <li class="meal-container" id="meal-{{ meal.slug }}">
                 <!-- Container header -->
                 <div class="meal-header">
                     <span class="meal-title">{{ meal.name }}</span>
                     <div class="meal-right">
                         <span class="meal-weight">{{ meal.total_weight|floatformat:"-2" }}g</span>
                         <!-- Toggle expand/collapse arrow -->
-                        <button type="button" class="toggle-btn" data-target="meal-{{ meal.pk }}" aria-label="Expand meal">
+                        <button type="button" class="toggle-btn" data-target="meal-{{ meal.slug }}" aria-label="Expand meal">
                             <svg class="arrow-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                 <polyline points="9 18 15 12 9 6"/>
                             </svg>
@@ -62,8 +62,8 @@
                 </div>
 
                 <!-- Expanded food items -->
-                <div class="meal-items-wrapper" id="items-{{ meal.pk }}">
-                    {% for item in meal.items.all %}
+                <div class="meal-items-wrapper" id="items-{{ meal.slug }}">
+                    {% for item in meal.items %}
                         <div class="meal-item">
                             <div class="meal-header">
                                 <span class="meal-title">{{ item.food.name }}</span>
@@ -80,7 +80,7 @@
                                         </button>
                                         <div class="dropdown-menu">
                                             <a href="{% url 'tracker:meal_item_duplicate' item.pk %}" class="dropdown-item">Duplicate</a>
-                                            <a href="{% url 'tracker:meal_item_edit' item.pk %}?date={{ current_date|date:'Y-m-d' }}" class="dropdown-item">Edit</a>
+                                            <a href="{% url 'tracker:meal_item_edit' item.pk %}" class="dropdown-item">Edit</a>
                                             <form method="post" action="{% url 'tracker:meal_item_delete' item.pk %}" style="margin:0;">
                                                 {% csrf_token %}
                                                 <button type="submit" class="dropdown-item delete" style="width:100%;background:none;border:none;cursor:pointer;text-align:left;">Delete</button>
@@ -96,7 +96,7 @@
                     {% endfor %}
 
                     <!-- Add food to this container -->
-                    <a href="{% url 'tracker:meal_item_add' meal.pk %}" class="btn btn-outline meal-add-food-btn">+ Add Food</a>
+                    <a href="{% url 'tracker:meal_item_add' %}?meal_type={{ meal.name|urlencode }}&date={{ current_date|date:'Y-m-d' }}" class="btn btn-outline meal-add-food-btn">+ Add Food</a>
                 </div>
             </li>
         {% endfor %}

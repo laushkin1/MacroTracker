@@ -14,10 +14,10 @@
                 <!-- Meal selection -->
                 <div style="margin-bottom: 20px;">
                     <label for="id_meal" style="display: block; font-weight: bold; margin-bottom: 8px;">Meal:</label>
-                    <select name="meal_id" id="id_meal" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background-color: #fff;" required>
-                        <option value="" disabled {% if not selected_meal_id %}selected{% endif %}>Select a meal...</option>
-                        {% for m in meals %}
-                            <option value="{{ m.id }}" {% if m.id == selected_meal_id %}selected{% endif %}>{{ m.name }}</option>
+                    <select name="meal_type" id="id_meal_type" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background-color: #fff;" required>
+                        <option value="" disabled {% if not selected_meal_type %}selected{% endif %}>Select a meal...</option>
+                        {% for m in default_meals %}
+                            <option value="{{ m }}" {% if m == selected_meal_type %}selected{% endif %}>{{ m }}</option>
                         {% endfor %}
                     </select>
                 </div>

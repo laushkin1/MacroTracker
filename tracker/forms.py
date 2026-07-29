@@ -1,7 +1,7 @@
 from django import forms
 from django.core.exceptions import ValidationError
 from django.utils import timezone
-from .models import Food, Meal, MealItem, UserProfile
+from .models import Food, MealItem, UserProfile
 
 
 class FoodForm(forms.ModelForm):
@@ -14,32 +14,8 @@ class FoodForm(forms.ModelForm):
         widgets = {
             'name': forms.TextInput(attrs={'placeholder': 'e.g. Chicken Breast', 'autocomplete': 'off'}),
             'barcode': forms.HiddenInput(),
-            'carbs': forms.NumberInput(attrs={'placeholder': '0', 'step': 'any', 'min': '0'}),
         }
 
-        def clean_carbs(self):
-            return self.cleaned_data.get('carbs') or 0.0
-
-
-class MealItemForm(forms.ModelForm):
-    class Meta:
-        model = MealItem
-        fields = ['food', 'weight_grams']
-        widgets = {
-            'food': forms.HiddenInput(),
-            'weight_grams': forms.NumberInput(attrs={
-                'step': 'any', 'min': '0.01', 'placeholder': 'e.g. 150'
-            }),
-        }
-
-    def full_clean(self):
-        if self.is_bound and self.data:
-            weight_val = self.data.get('weight_grams')
-            if isinstance(weight_val, str) and ',' in weight_val:
-                mutable_data = self.data.copy()
-                mutable_data['weight_grams'] = weight_val.replace(',', '.')
-                self.data = mutable_data
-        super().full_clean()
 
 
 class ProfileForm(forms.ModelForm):

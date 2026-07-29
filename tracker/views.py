@@ -12,11 +12,13 @@ from datetime import datetime, timedelta
 import json
 import urllib.request
 
-from .models import Meal, MealItem, Food, UserProfile
-from .forms import MealItemForm, FoodForm, ProfileForm, UsernameChangeForm
+from .models import MealItem, Food, UserProfile, MEAL_CHOICES
+from .forms import FoodForm, ProfileForm, UsernameChangeForm
 
 from django.contrib.auth import login
 from django.contrib.auth.forms import UserCreationForm
+
+DEFAULT_MEAL_NAMES = [m[0] for m in MEAL_CHOICES]
 
 
 def register(request):
@@ -80,36 +82,35 @@ def daily_dashboard(request):
     prev_date = current_date - timedelta(days=1)
     next_date = current_date + timedelta(days=1) if current_date < today else None
 
-    DEFAULT_MEALS = [
-        'Breakfast', 'Morning Snack', 'Lunch', 
-        'Afternoon Snack', 'Dinner', 'Second Dinner'
-    ]
+    daily_items = MealItem.objects.filter(user=request.user, date=current_date).select_related('food')
 
-    existing_names = set(Meal.objects.filter(
-        user=request.user, date=current_date
-    ).values_list('name', flat=True))
+    daily_meals = []
+    consumed_calories = consumed_protein = consumed_fat = consumed_carbs = 0
 
-    for name in DEFAULT_MEALS:
-        if name not in existing_names:
-            Meal.objects.create(
-                user=request.user, 
-                date=current_date, 
-                name=name
-            )
+    for name in DEFAULT_MEAL_NAMES:
+        items = [item for item in daily_items if item.meal_type == name]
+        
+        m_cal = sum(item.total_calories for item in items)
+        m_pro = sum(item.total_protein for item in items)
+        m_fat = sum(item.total_fat for item in items)
+        m_car = sum(item.total_carbs for item in items)
+        m_weight = sum(item.weight_grams for item in items)
 
-    # Fetch all Meals for the day with prefetched items and food data
-    daily_meals_qs = Meal.objects.filter(
-        user=request.user, date=current_date
-    ).prefetch_related('items__food')
+        consumed_calories += m_cal
+        consumed_protein += m_pro
+        consumed_fat += m_fat
+        consumed_carbs += m_car
 
-    daily_meals = list(daily_meals_qs)
-    daily_meals.sort(key=lambda m: DEFAULT_MEALS.index(m.name) if m.name in DEFAULT_MEALS else 999)
-
-    # Total КБЖУ = sum across all Meals, each Meal = sum of its MealItems
-    consumed_calories = sum(meal.total_calories for meal in daily_meals)
-    consumed_protein = sum(meal.total_protein for meal in daily_meals)
-    consumed_fat = sum(meal.total_fat for meal in daily_meals)
-    consumed_carbs = sum(meal.total_carbs for meal in daily_meals)
+        daily_meals.append({
+            'name': name,
+            'slug': name.replace(' ', '-').lower(),
+            'items': items,
+            'total_weight': m_weight,
+            'total_calories': m_cal,
+            'total_protein': m_pro,
+            'total_fat': m_fat,
+            'total_carbs': m_car,
+        })
 
     try:
         profile = request.user.profile
@@ -152,19 +153,19 @@ def monthly_dashboard(request):
     except UserProfile.DoesNotExist:
         profile = None
 
-    meals = Meal.objects.filter(
+    items = MealItem.objects.filter(
         user=request.user, date__year=year, date__month=month
-    ).prefetch_related('items__food')
+    ).select_related('food')
 
     daily_totals = {}
-    for meal in meals:
-        d = meal.date
+    for item in items:
+        d = item.date
         if d not in daily_totals:
             daily_totals[d] = {'calories': 0, 'protein': 0, 'fat': 0, 'carbs': 0}
-        daily_totals[d]['calories'] += meal.total_calories
-        daily_totals[d]['protein'] += meal.total_protein
-        daily_totals[d]['fat'] += meal.total_fat
-        daily_totals[d]['carbs'] += meal.total_carbs
+        daily_totals[d]['calories'] += item.total_calories
+        daily_totals[d]['protein'] += item.total_protein
+        daily_totals[d]['fat'] += item.total_fat
+        daily_totals[d]['carbs'] += item.total_carbs
 
     cal = calendar.Calendar(firstweekday=0)
     month_days = cal.monthdatescalendar(year, month)
@@ -346,45 +347,30 @@ def _get_foods_json(user):
 
 # --- MEAL ITEM CRUD ---
 @login_required
-def meal_item_add(request, meal_pk=None):
-    """Add a food item to a Meal container."""
-    meal = None
+def meal_item_add(request):
+    """Add a food item directly to a date and meal_type."""
+    date_str = request.GET.get('date')
+    selected_meal_type = request.GET.get('meal_type')
     
-    if meal_pk:
-        meal = get_object_or_404(Meal, pk=meal_pk, user=request.user)
-        current_date = meal.date
-    else:
-        date_str = request.GET.get('date')
-        if date_str:
-            try:
-                current_date = datetime.strptime(date_str, '%Y-%m-%d').date()
-            except ValueError:
-                current_date = timezone.now().date()
-        else:
+    if date_str:
+        try:
+            current_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        except ValueError:
             current_date = timezone.now().date()
+    else:
+        current_date = timezone.now().date()
         
-    meals_qs = Meal.objects.filter(user=request.user, date=current_date)
-    DEFAULT_MEALS = [
-        'Breakfast', 'Morning Snack', 'Lunch', 
-        'Afternoon Snack', 'Dinner', 'Second Dinner'
-    ]
-    meals = list(meals_qs)
-    meals.sort(key=lambda m: DEFAULT_MEALS.index(m.name) if m.name in DEFAULT_MEALS else 999)
-    
-    selected_meal_id = meal.pk if meal else None
     foods_json = _get_foods_json(request.user)
 
     if request.method == 'POST':
-        form_meal_id = request.POST.get('meal_id')
-        target_meal = get_object_or_404(Meal, pk=form_meal_id, user=request.user)
-
+        meal_type = request.POST.get('meal_type')
         food_id = request.POST.get('food_id')
         off_name = request.POST.get('off_name')
         
         quantity_str = request.POST.get('quantity')
         multiplier_str = request.POST.get('portion_multiplier')
         
-        if quantity_str and multiplier_str and (food_id or off_name):
+        if quantity_str and multiplier_str and (food_id or off_name) and meal_type:
             try:
                 quantity = float(str(quantity_str).replace(',', '.'))
                 multiplier = float(str(multiplier_str).replace(',', '.'))
@@ -418,18 +404,21 @@ def meal_item_add(request, meal_pk=None):
                     )
                 
                 if food_obj:
-                    MealItem.objects.create(meal=target_meal, food=food_obj, weight_grams=final_weight)
+                    MealItem.objects.create(
+                        user=request.user,
+                        date=current_date,
+                        meal_type=meal_type,
+                        food=food_obj,
+                        weight_grams=final_weight
+                    )
             except Exception as e:
                 print(f"ERROR ADDING MEAL ITEM: {e}")
-                pass
-                
-        date_iso = target_meal.date.isoformat()
-        return redirect(f"{reverse('tracker:dashboard')}?date={date_iso}")
+           
+        return redirect(f"{reverse('tracker:dashboard')}?date={current_date.isoformat()}")
 
     return render(request, 'tracker/meal_item_form.html', {
-        'meal': meal,
-        'meals': meals,
-        'selected_meal_id': selected_meal_id,
+        'default_meals': DEFAULT_MEAL_NAMES,
+        'selected_meal_type': selected_meal_type,
         'foods_json': foods_json,
         'is_edit': False,
         'current_date': current_date,
@@ -438,32 +427,19 @@ def meal_item_add(request, meal_pk=None):
 
 @login_required
 def meal_item_edit(request, pk):
-    """Edit a food item inside a Meal container (with meal selection)."""
-    item = get_object_or_404(MealItem, pk=pk, meal__user=request.user)
-    current_meal = item.meal
-    current_date = current_meal.date
-
-    meals_qs = Meal.objects.filter(user=request.user, date=current_date)
-    DEFAULT_MEALS = [
-        'Breakfast', 'Morning Snack', 'Lunch', 
-        'Afternoon Snack', 'Dinner', 'Second Dinner'
-    ]
-    meals = list(meals_qs)
-    meals.sort(key=lambda m: DEFAULT_MEALS.index(m.name) if m.name in DEFAULT_MEALS else 999)
-
+    item = get_object_or_404(MealItem, pk=pk, user=request.user)
+    current_date = item.date
     foods_json = _get_foods_json(request.user)
 
     if request.method == 'POST':
-        form_meal_id = request.POST.get('meal_id')
-        target_meal = get_object_or_404(Meal, pk=form_meal_id, user=request.user)
-
+        meal_type = request.POST.get('meal_type')
         food_id = request.POST.get('food_id')
         off_name = request.POST.get('off_name')
         
         quantity_str = request.POST.get('quantity')
         multiplier_str = request.POST.get('portion_multiplier')
         
-        if quantity_str and multiplier_str and (food_id or off_name):
+        if quantity_str and multiplier_str and (food_id or off_name) and meal_type:
             try:
                 quantity = float(str(quantity_str).replace(',', '.'))
                 multiplier = float(str(multiplier_str).replace(',', '.'))
@@ -497,21 +473,19 @@ def meal_item_edit(request, pk):
                     )
                 
                 if food_obj:
-                    item.meal = target_meal
+                    item.meal_type = meal_type
                     item.food = food_obj
                     item.weight_grams = final_weight
                     item.save()
             except Exception as e:
-                print(f"ERROR EDITING MEAL ITEM: {e}")
-                pass
-                
-        date_iso = target_meal.date.isoformat()
-        return redirect(f"{reverse('tracker:dashboard')}?date={date_iso}")
+                print(f"ERROR EDITING MEAL ITEM: {e}")   
+
+        return redirect(f"{reverse('tracker:dashboard')}?date={current_date.isoformat()}")
         
     return render(request, 'tracker/meal_item_form.html', {
         'item': item,
-        'meals': meals,
-        'selected_meal_id': current_meal.id,
+        'default_meals': DEFAULT_MEAL_NAMES,
+        'selected_meal_type': item.meal_type,
         'foods_json': foods_json,
         'is_edit': True,
         'current_date': current_date,
@@ -520,8 +494,8 @@ def meal_item_edit(request, pk):
 
 @login_required
 def meal_item_delete(request, pk):
-    item = get_object_or_404(MealItem, pk=pk, meal__user=request.user)
-    date_iso = item.meal.date.isoformat()
+    item = get_object_or_404(MealItem, pk=pk, user=request.user)
+    date_iso = item.date.isoformat()
     if request.method == 'POST':
         item.delete()
     return redirect(f"{reverse('tracker:dashboard')}?date={date_iso}")
@@ -529,15 +503,15 @@ def meal_item_delete(request, pk):
 
 @login_required
 def meal_item_duplicate(request, pk):
-    """Duplicate a food item inside the same Meal container."""
-    item = get_object_or_404(MealItem, pk=pk, meal__user=request.user)
+    item = get_object_or_404(MealItem, pk=pk, user=request.user)
     MealItem.objects.create(
-        meal=item.meal,
+        user=item.user,
+        date=item.date,
+        meal_type=item.meal_type,
         food=item.food,
         weight_grams=item.weight_grams,
     )
-    date_iso = item.meal.date.isoformat()
-    return redirect(f"{reverse('tracker:dashboard')}?date={date_iso}")
+    return redirect(f"{reverse('tracker:dashboard')}?date={item.date.isoformat()}")
 
 
 # --- PROFILE & SETTINGS ---

@@ -52,3 +52,9 @@
 - Bugfix: Fixed form validation handling when adding food items to meals, preventing accidental redirection and data loss if the weight field is left empty or invalid.
 - Feature: Enhanced the OpenFoodFacts integration to display full macro nutrients (calories, protein, fat, and carbs per 100g) directly within search results and selection views.
 - Feature: Added multi-unit measurement support for food items, allowing users to log consumption using custom units alongside standard grams and milliliters
+
+### 2026-07-29
+- Refactor: Eliminated the Meal model entirely from the database architecture to prevent database bloat and redundant record generation for daily meal slots.
+- Architecture: Shifted the 6 standard meal categories (Breakfast, Morning Snack, Lunch, Afternoon Snack, Dinner, Second Dinner) to a purely frontend-rendered UI structure.
+- Backend: Updated the data schema and API endpoints so that MealItem entries now bind directly to the date and user context, bypassing intermediate meal container tables.
+- Database: Generated and applied database migrations to drop the Meal model and clean up obsolete foreign key dependencies.
