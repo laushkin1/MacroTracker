@@ -522,9 +522,21 @@ class ProfileUpdateView(LoginRequiredMixin, UpdateView):
     success_url = reverse_lazy('tracker:dashboard')
 
     def get_object(self, queryset=None):
-        profile, created = UserProfile.objects.get_or_create(user=self.request.user)
-        return profile
+        try:
+            return self.request.user.profile
+        except UserProfile.DoesNotExist:
+            return UserProfile(user=self.request.user)
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        cancel_url = self.request.POST.get('cancel_url') or self.request.META.get('HTTP_REFERER')
+        
+        if not cancel_url:
+            cancel_url = reverse('tracker:dashboard')
+            
+        context['cancel_url'] = cancel_url
+        return context
 
 @login_required
 def settings_view(request):

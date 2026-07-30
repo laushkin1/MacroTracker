@@ -9,12 +9,14 @@
     <div class="card">
         <form method="post">
             {% csrf_token %}
+            <input type="hidden" name="cancel_url" value="{{ cancel_url }}">
+            
             {{ form.as_p }}
             <button type="submit" class="btn" style="margin-top: 15px;">Save Limits</button>
         </form>
     </div>
 
     <div style="text-align: center;">
-        <a href="{% url 'tracker:settings' %}">&larr; Cancel</a>
+        <a href="{{ cancel_url }}">&larr; Cancel</a>
     </div>
 {% endblock %}

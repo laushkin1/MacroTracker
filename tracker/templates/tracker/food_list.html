@@ -55,28 +55,90 @@
         {% endfor %}
     </ul>
 
+    <!-- БЛОК ПАГИНАЦИИ (Стрелочки) -->
+    <div id="pagination_controls" style="display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; margin-top: 20px; width: 100%;">
+        
+        <div>
+            <button id="prev_page" style="display: none; background: transparent; border: 1px solid var(--border); border-radius: 50%; width: 44px; height: 44px; cursor: pointer; font-size: 18px; color: var(--text-main);">&larr;</button>
+        </div>
+
+        <div style="text-align: center;">
+            <span id="page_indicator" style="color: var(--text-muted); font-size: 0.9em; font-weight: 500; display: none;"></span>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end;">
+            <button id="next_page" style="display: none; background: transparent; border: 1px solid var(--border); border-radius: 50%; width: 44px; height: 44px; cursor: pointer; font-size: 18px; color: var(--text-main);">&rarr;</button>
+        </div>
+
+    </div>
+
     <div style="text-align: center; margin-top: 25px;">
         <a href="{% url 'tracker:dashboard' %}{% if origin_date %}?date={{ origin_date }}{% endif %}">&larr; Back to Dashboard</a>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            // --- Live Search ---
             const searchInput = document.getElementById('food_search');
-            const items = document.querySelectorAll('.food-item');
+            const allItems = Array.from(document.querySelectorAll('.food-item'));
+            
+            const prevBtn = document.getElementById('prev_page');
+            const nextBtn = document.getElementById('next_page');
+            const pageIndicator = document.getElementById('page_indicator');
+            
+            const ITEMS_PER_PAGE = 6;
+            let currentPage = 1;
 
-            searchInput.addEventListener('input', (e) => {
-                const query = e.target.value.toLowerCase().trim();
-                items.forEach(item => {
+            function updateList() {
+                const query = searchInput.value.toLowerCase().trim();
+                
+                const filteredItems = allItems.filter(item => {
                     const name = item.getAttribute('data-name');
                     const barcode = item.getAttribute('data-barcode');
-                    if (name.includes(query) || barcode.includes(query)) {
-                        item.style.display = '';
-                    } else {
-                        item.style.display = 'none';
-                    }
+                    return name.includes(query) || barcode.includes(query);
                 });
+
+                const totalPages = Math.ceil(filteredItems.length / ITEMS_PER_PAGE) || 1;
+                
+                if (currentPage > totalPages) currentPage = totalPages;
+                if (currentPage < 1) currentPage = 1;
+
+                allItems.forEach(item => item.style.display = 'none');
+
+                const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+                const endIndex = startIndex + ITEMS_PER_PAGE;
+                const itemsToShow = filteredItems.slice(startIndex, endIndex);
+                
+                itemsToShow.forEach(item => item.style.display = '');
+
+                prevBtn.style.display = (currentPage > 1) ? 'block' : 'none';
+                nextBtn.style.display = (currentPage < totalPages) ? 'block' : 'none';
+                
+                if (totalPages > 1) {
+                    pageIndicator.style.display = 'block';
+                    pageIndicator.innerText = `${currentPage} / ${totalPages}`;
+                } else {
+                    pageIndicator.style.display = 'none';
+                }
+            }
+
+            prevBtn.addEventListener('click', () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    updateList();
+                }
             });
+
+            nextBtn.addEventListener('click', () => {
+                currentPage++;
+                updateList();
+            });
+
+            searchInput.addEventListener('input', () => {
+                currentPage = 1;
+                updateList();
+            });
+
+            updateList();
 
             // --- Dropdown menus logic (copied from dashboard) ---
             document.querySelectorAll('.dropdown').forEach(function (dropdown) {

@@ -58,3 +58,8 @@
 - Architecture: Shifted the 6 standard meal categories (Breakfast, Morning Snack, Lunch, Afternoon Snack, Dinner, Second Dinner) to a purely frontend-rendered UI structure.
 - Backend: Updated the data schema and API endpoints so that MealItem entries now bind directly to the date and user context, bypassing intermediate meal container tables.
 - Database: Generated and applied database migrations to drop the Meal model and clean up obsolete foreign key dependencies.
+
+### 2026-07-30
+- UI/UX: Styled input default "0" values as gray placeholder text and allowed saving items without manually clearing zeroes.
+- Bugfix: Fixed profile setup cancellation routing so users are correctly redirected to the dashboard instead of settings, and ensured user limits only save upon explicit form submission.
+- Feature: Added pagination to the food database to limit the number of items displayed per page and improve load performance.

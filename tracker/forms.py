@@ -5,6 +5,11 @@ from .models import Food, MealItem, UserProfile
 
 
 class FoodForm(forms.ModelForm):
+    calories = forms.CharField(required=False, widget=forms.TextInput(attrs={'placeholder': '0', 'inputmode': 'decimal'}))
+    protein = forms.CharField(required=False, widget=forms.TextInput(attrs={'placeholder': '0', 'inputmode': 'decimal'}))
+    fat = forms.CharField(required=False, widget=forms.TextInput(attrs={'placeholder': '0', 'inputmode': 'decimal'}))
+    carbs = forms.CharField(required=False, widget=forms.TextInput(attrs={'placeholder': '0', 'inputmode': 'decimal'}))
+
     class Meta:
         model = Food
         fields = ['name', 'barcode', 'calories', 'protein', 'fat', 'carbs', 'portions']
@@ -16,6 +21,33 @@ class FoodForm(forms.ModelForm):
             'barcode': forms.HiddenInput(),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in ['calories', 'protein', 'fat', 'carbs']:
+            val = self.initial.get(field)
+            if val in [0, 0.0, '0', '0.0', None]:
+                self.initial[field] = ''
+
+    def _parse_macro(self, field_name):
+        val = self.cleaned_data.get(field_name)
+        if not val:
+            return 0.0
+        try:
+            return float(str(val).replace(',', '.'))
+        except ValueError:
+            return 0.0
+
+    def clean_calories(self): 
+        return self._parse_macro('calories')
+        
+    def clean_protein(self): 
+        return self._parse_macro('protein')
+        
+    def clean_fat(self): 
+        return self._parse_macro('fat')
+        
+    def clean_carbs(self): 
+        return self._parse_macro('carbs')
 
 
 class ProfileForm(forms.ModelForm):
