@@ -72,7 +72,7 @@
                 
                 row.innerHTML = `
                     <input type="text" class="p-name" placeholder="Name (e.g. Medium)" value="${name}" style="flex: 2; margin: 0; padding: 10px;">
-                    <input type="number" class="p-weight" placeholder="Weight (g)" value="${weight}" step="any" min="0.1" style="flex: 1; margin: 0; padding: 10px;">
+                    <input type="text" inputmode="decimal" class="p-weight" placeholder="Weight (g)" value="${weight}" required style="flex: 1; margin: 0; padding: 10px;">
                     <button type="button" class="remove-btn" style="background: none; border: none; color: var(--danger); cursor: pointer; padding: 5px;">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                     </button>
@@ -95,7 +95,7 @@
                     const n = row.querySelector('.p-name').value.trim();
                     const w = row.querySelector('.p-weight').value;
                     if (n && w) {
-                        newPortions[n] = parseFloat(w);
+                        newPortions[n] = parseFloat(w.replace(',', '.'));
                     }
                 });
                 hiddenPortionsInput.value = JSON.stringify(newPortions);

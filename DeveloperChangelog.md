@@ -63,3 +63,8 @@
 - UI/UX: Styled input default "0" values as gray placeholder text and allowed saving items without manually clearing zeroes.
 - Bugfix: Fixed profile setup cancellation routing so users are correctly redirected to the dashboard instead of settings, and ensured user limits only save upon explicit form submission.
 - Feature: Added pagination to the food database to limit the number of items displayed per page and improve load performance.
+
+### 2026-07-31
+- Refactor: Extracted helper functions (_parse_float_value and _resolve_food_from_post) to remove code duplication across meal item views, replaced print() calls with proper logging, tightened exception handling, optimized FoodListView sorting, and rewrote all comments in Simplified Technical English.
+- Template & Routing: Renamed core templates (username_form.html to registration/change_username.html, monthly.html to calendar.html, and profile_form.html to tracker/edit_daily_limits_form.html).
+- UI/UX: Updated weight and amount inputs to use type="text" and inputmode="decimal" for optimized mobile phone keyboards with automatic comma-to-dot replacement, and streamlined form validation rules for default and required values.

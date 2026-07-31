@@ -4,13 +4,13 @@
 
 {% block content %}
     <h2>Edit Daily Limits</h2>
-    <p>Set to 0 if you don't want to track limits or see color indicators.</p>
-    
+    <p>Set to 0 if you do not want to track limits or see color indicators.</p>
+
     <div class="card">
         <form method="post">
             {% csrf_token %}
             <input type="hidden" name="cancel_url" value="{{ cancel_url }}">
-            
+
             {{ form.as_p }}
             <button type="submit" class="btn" style="margin-top: 15px;">Save Limits</button>
         </form>

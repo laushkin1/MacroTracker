@@ -11,7 +11,7 @@
             <h3 style="text-align: left; margin-bottom: 15px;">Daily Summary</h3>
             <div class="macro-row">
                 <span>Calories</span>
-                <span><span class="macro-val" style="background-color: {{ colors.calories }};">{{ consumed_calories|floatformat:1 }}</span>{% if profile.daily_calories_limit > 0 %} / {{ profile.daily_calories_limit }} kcal{% endif %}</span>
+                <span><span class="macro-val" style="background-color: {{ colors.calories }};">{{ consumed_calories|floatformat:1 }}</span>{% if profile.daily_calories_limit > 0 %} / {{ profile.daily_calories_limit }}kcal{% endif %}</span>
             </div>
             <div class="macro-row">
                 <span>Protein</span>

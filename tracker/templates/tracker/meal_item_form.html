@@ -61,8 +61,8 @@
                 <div style="display: flex; gap: 10px; align-items: flex-end; margin-bottom: 24px;">
                     <div style="flex: 1;">
                         <label for="id_quantity" style="display: block; font-weight: bold; margin-bottom: 8px;">Amount:</label>
-                        <input type="number" id="id_quantity" name="quantity" step="any" min="0.01"
-                            value="{% if is_edit %}{{ item.weight_grams|floatformat:-2 }}{% else %}1{% endif %}" required>
+                        <input type="text" inputmode="decimal" id="id_quantity" name="quantity" placeholder="1"
+                            value="{% if is_edit %}{{ item.weight_grams|floatformat:-2 }}{% endif %}">
                     </div>
                     <div style="flex: 2;">
                         <label for="id_portion" style="display: block; font-weight: bold; margin-bottom: 8px;">Unit:</label>
@@ -137,6 +137,13 @@
         const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
         const offUrl = `{% url 'tracker:off_search' %}?return_to=${returnUrl}&q=${encodeURIComponent(q)}`;
         window.location.href = offUrl;
+    });
+
+    document.getElementById('meal_item_form').addEventListener('submit', (e) => {
+        const qInput = document.getElementById('id_quantity');
+        if (!qInput.value.trim()) {
+            qInput.value = '1';
+        }
     });
 
     function renderLocalList(items) {

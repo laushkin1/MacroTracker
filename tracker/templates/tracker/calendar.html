@@ -1,11 +1,11 @@
 {% extends 'tracker/base.html' %}
 
-{% block title %}Monthly View{% endblock %}
+{% block title %}Monthly Calendar{% endblock %}
 
 {% block content %}
     <h2 style="display: flex; justify-content: center; align-items: center; gap: 20px; margin-top: 20px;">
-        <a href="?year={{ prev_year }}&month={{ prev_month }}" style="color: var(--text-main); font-size: 1.2em;">&larr;</a> 
-        {{ month_name }} {{ year }} 
+        <a href="?year={{ prev_year }}&month={{ prev_month }}" style="color: var(--text-main); font-size: 1.2em;">&larr;</a>
+        {{ month_name }} {{ year }}
         <a href="?year={{ next_year }}&month={{ next_month }}" style="color: var(--text-main); font-size: 1.2em;">&rarr;</a>
     </h2>
 
