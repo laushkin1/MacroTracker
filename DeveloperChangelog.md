@@ -68,3 +68,8 @@
 - Refactor: Extracted helper functions (_parse_float_value and _resolve_food_from_post) to remove code duplication across meal item views, replaced print() calls with proper logging, tightened exception handling, optimized FoodListView sorting, and rewrote all comments in Simplified Technical English.
 - Template & Routing: Renamed core templates (username_form.html to registration/change_username.html, monthly.html to calendar.html, and profile_form.html to tracker/edit_daily_limits_form.html).
 - UI/UX: Updated weight and amount inputs to use type="text" and inputmode="decimal" for optimized mobile phone keyboards with automatic comma-to-dot replacement, and streamlined form validation rules for default and required values.
+
+### 2026-08-02
+- Backend: Switched numeric form fields to use Decimal instead of float for precise decimal storage without floating-point inaccuracies.
+- Validation: Added case-insensitive duplicate food name validation in FoodForm to prevent users from creating items with existing names, complete with inline error messages and dedicated unit tests.
+- UI/UX: Integrated error rendering into food_form.html to display clear red warning messages beneath specific fields upon invalid input.

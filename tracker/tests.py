@@ -455,6 +455,20 @@ class FoodCreateViewTest(TestCase):
         response = self.client.post(reverse('tracker:food_create'), {'name': ''})
         self.assertEqual(response.status_code, 200)
 
+    def test_post_duplicate_food_name_shows_error(self):
+        Food.objects.create(name='Broccoli', calories=34, owner=self.user)
+        data = {
+            'name': 'Broccoli',
+            'calories': '34',
+            'protein': '3',
+            'fat': '1',
+            'carbs': '7',
+            'portions': '{}',
+        }
+        response = self.client.post(reverse('tracker:food_create'), data)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("You already have a food named 'Broccoli'.", response.context['form'].errors['name'])
+
 
 class FoodUpdateViewTest(TestCase):
     """Tests for FoodUpdateView."""
@@ -484,6 +498,20 @@ class FoodUpdateViewTest(TestCase):
         self.client.post(reverse('tracker:food_update', args=[self.food.pk]), data)
         self.food.refresh_from_db()
         self.assertEqual(self.food.name, 'Brown Rice')
+
+    def test_post_duplicate_food_name_shows_error(self):
+        Food.objects.create(name='Quinoa', calories=120, owner=self.user)
+        data = {
+            'name': 'Quinoa',
+            'calories': '111',
+            'protein': '3',
+            'fat': '1',
+            'carbs': '23',
+            'portions': '{}',
+        }
+        response = self.client.post(reverse('tracker:food_update', args=[self.food.pk]), data)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("You already have a food named 'Quinoa'.", response.context['form'].errors['name'])
 
     def test_other_user_cannot_edit_food(self):
         other = User.objects.create_user(username='kate', password='pass')

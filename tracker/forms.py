@@ -1,4 +1,5 @@
 from django import forms
+from decimal import Decimal, InvalidOperation
 
 from .models import Food, UserProfile
 
@@ -46,6 +47,7 @@ class FoodForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
         # Do not pre-fill zero values — keep the field empty for better UX.
         for field in ['calories', 'protein', 'fat', 'carbs']:
@@ -53,15 +55,25 @@ class FoodForm(forms.ModelForm):
             if val in [0, 0.0, '0', '0.0', None]:
                 self.initial[field] = ''
 
+    def clean_name(self):
+        name = self.cleaned_data.get('name')
+        if self.user:
+            qs = Food.objects.filter(name__iexact=name, owner=self.user)
+            if self.instance and self.instance.pk:
+                qs = qs.exclude(pk=self.instance.pk)
+            if qs.exists():
+                raise forms.ValidationError(f"You already have a food named '{name}'.")
+        return name
+
     def _parse_macro(self, field_name):
-        """Convert a macro field value to float. Replace comma with dot."""
+        """Convert a macro field value to Decimal. Replace comma with dot."""
         val = self.cleaned_data.get(field_name)
         if not val:
-            return 0.0
+            return Decimal('0.0')
         try:
-            return float(str(val).replace(',', '.'))
-        except ValueError:
-            return 0.0
+            return Decimal(str(val).replace(',', '.').strip())
+        except (ValueError, InvalidOperation):
+            return Decimal('0.0')
 
     def clean_calories(self):
         return self._parse_macro('calories')

@@ -385,6 +385,11 @@ class FoodCreateView(LoginRequiredMixin, CreateView):
         context['origin_date'] = self.request.GET.get('date', '')
         return context
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
     def form_valid(self, form):
         form.instance.owner = self.request.user
         return super().form_valid(form)
@@ -410,6 +415,11 @@ class FoodUpdateView(LoginRequiredMixin, UpdateView):
         context = super().get_context_data(**kwargs)
         context['origin_date'] = self.request.GET.get('date', '')
         return context
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
 
     def get_success_url(self):
         date_param = self.request.GET.get('date')

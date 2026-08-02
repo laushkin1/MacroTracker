@@ -23,6 +23,12 @@
         <form method="post" id="custom_food_form">
             {% csrf_token %}
             
+            {% if form.non_field_errors %}
+                <div style="color: var(--danger); margin-bottom: 15px; font-weight: bold; text-align: left;">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+            
             {% for field in form %}
                 {% if field.name == 'portions' %}
                     <div style="display: none;">{{ field }}</div>
@@ -30,6 +36,9 @@
                     <div style="margin-bottom: 15px; text-align: left;">
                         <label style="font-weight: bold; margin-bottom: 5px; display: block;">{{ field.label }}</label>
                         {{ field }}
+                        {% if field.errors %}
+                            <div style="color: var(--danger); font-size: 0.9em; margin-top: 5px;">{{ field.errors }}</div>
+                        {% endif %}
                     </div>
                 {% endif %}
             {% endfor %}
